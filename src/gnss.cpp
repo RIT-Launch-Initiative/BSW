@@ -3,6 +3,11 @@
 #include <Arduino.h>
 #include <FreeRTOS_SAMD21.h>
 #include <TinyGPS++.h>
+
+
+static Geofence geofences[32]{0};
+static size_t geofenceCount = 0;
+
 void gnssInit() {}
 
 
