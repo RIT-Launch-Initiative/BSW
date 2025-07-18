@@ -9,23 +9,29 @@
 
 #define HDC2080_ADDR 0x40
 
-MS5607 ms5607(MS56XX_ADDR_LOW, MS5607);
+MS56XX ms5607(MS56XX_ADDR_LOW, MS5607);
 HDC2080 hdc2080(HDC2080_ADDR);
 
 void sensingInit() {
     Wire.begin();
+    ms5607.begin();
 }
 
 void sensingTask(void* pvParameters) {
     Serial.println("Sensing task started");
     while (1) {
-        float ms5607Pressure;
-        float ms5607Temperature;
+        ms5607.doBaro(true);
+        float ms5607Pressure = ms5607.pressure;
+        float ms5607Temperature = ms5607.temperature;
+        float ms5607Altitude = ms5607.altitude;
 
         float hdcTemp;
         float hdcHum;
 
-        Serial.print("MS5607 Pressure: ");
+        Serial.print("MS5607 Altitude: ");
+        Serial.print(ms5607Altitude);
+        Serial.print(" m, ");
+        Serial.print("Pressure: ");
         Serial.print(ms5607Pressure);
         Serial.print(" mbar, ");
         Serial.print("Temp: ");
