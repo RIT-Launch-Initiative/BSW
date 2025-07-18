@@ -8,12 +8,10 @@
 static Geofence geofences[32]{0};
 static size_t geofenceCount = 0;
 
-static const int RXPin = 4, TXPin = 3;
 static const uint32_t GPSBaud = 4800;
 TinyGPSPlus gps;
 
-static void printFloat(float val, bool valid, int len, int prec)
-{
+static void printFloat(float val, bool valid, int len, int prec) {
   if (!valid)
   {
     while (len-- > 1)
@@ -31,8 +29,7 @@ static void printFloat(float val, bool valid, int len, int prec)
   }
 }
 
-static void printInt(unsigned long val, bool valid, int len)
-{
+static void printInt(unsigned long val, bool valid, int len) {
   char sz[32] = "*****************";
   if (valid)
     sprintf(sz, "%ld", val);
@@ -44,8 +41,7 @@ static void printInt(unsigned long val, bool valid, int len)
   Serial.print(sz);
 }
 
-static void printDateTime(TinyGPSDate &d, TinyGPSTime &t)
-{
+static void printDateTime(TinyGPSDate &d, TinyGPSTime &t) {
   if (!d.isValid())
   {
     Serial.print(F("********** "));
@@ -69,8 +65,7 @@ static void printDateTime(TinyGPSDate &d, TinyGPSTime &t)
   printInt(d.age(), d.isValid(), 5);
 }
 
-static void printStr(const char *str, int len)
-{
+static void printStr(const char *str, int len) {
   int slen = strlen(str);
   for (int i=0; i<len; ++i)
     Serial.print(i<slen ? str[i] : ' ');
