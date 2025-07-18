@@ -1,9 +1,11 @@
-#include <FreeRTOS_SAMD21.h>
 #include "sensing.h"
+
 #include <Arduino.h>
+#include <FreeRTOS_SAMD21.h>
+#include <HDC2080.h>
+#include <MS56XX.h>
 #include <Wire.h>
-#include <MS5607.h>
-#include <SparkFun_HDC2080.h>
+
 
 #define MS5607_ADDR 0xED
 #define HDC2080_ADDR 0x40
@@ -13,25 +15,22 @@ HDC2080 hdc2080(HDC2080_ADDR);
 
 void sensingInit() {
     Wire.begin();
-    ms5607.begin();
-
 }
 
 void sensingTask(void* pvParameters) {
     Serial.println("Sensing task started");
     while (1) {
-        ms5607.read();
-        float pressure = ms5607.getPressure();
-        float temperature = ms5607.getTemperature();
+        float ms5607Pressure;
+        float ms5607Temperature;
 
-        // float hdcTemp = hdc2080.readTemp();
-        // float hdcHum = hdc2080.readHumidity();
+        float hdcTemp;
+        float hdcHum;
 
-        Serial.print("MS5607 Pressure: "); 
-        Serial.print(pressure); 
+        Serial.print("MS5607 Pressure: ");
+        Serial.print(ms5607Pressure);
         Serial.print(" mbar, ");
-        Serial.print("Temp: "); 
-        Serial.print(temperature); 
+        Serial.print("Temp: ");
+        Serial.print(ms5607Temperature);
         Serial.println(" C");
 
         Serial.print("HDC2080 Temp: "); 
