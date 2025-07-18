@@ -76,6 +76,20 @@ static void printStr(const char *str, int len)
     Serial.print(i<slen ? str[i] : ' ');
 }
 
+static bool isWithinGeofence() {
+    if (!gps.location.isValid()) return false;
+    double lat = gps.location.lat();
+    double lon = gps.location.lng();
+    for (size_t i = 0; i < geofenceCount; ++i) {
+        double dist = TinyGPSPlus::distanceBetween(
+            lat, lon, geofences[i].latitude, geofences[i].longitude);
+        if (dist <= geofences[i].radiusMeters) {
+            return true;
+        }
+    }
+    return false;
+}
+
 void gnssInit() { Serial1.begin(GPSBaud); }
 
 void gnssTask(void *pvParameters) {
@@ -90,9 +104,7 @@ void gnssTask(void *pvParameters) {
         "----------------------------------------------------------------------"
         "--------------------------------------------------------------"));
     while (1) {
-        // Feed GPS data
         while (Serial1.available()) gps.encode(Serial1.read());
-        // Print GNSS info
         printInt(gps.satellites.value(), gps.satellites.isValid(), 5);
         printFloat(gps.hdop.hdop(), gps.hdop.isValid(), 6, 1);
         printFloat(gps.location.lat(), gps.location.isValid(), 11, 6);
