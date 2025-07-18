@@ -1,7 +1,8 @@
-#include <FreeRTOS_SAMD21.h>
 #include "gnss.h"
-#include <Arduino.h>
 
+#include <Arduino.h>
+#include <FreeRTOS_SAMD21.h>
+#include <TinyGPS++.h>
 void gnssInit() {}
 
 
