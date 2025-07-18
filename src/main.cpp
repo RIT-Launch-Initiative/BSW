@@ -1,13 +1,11 @@
 #include <Arduino.h>
-#include <Arduino_FreeRTOS.h>
+#include <FreeRTOS_SAMD21.h>
 #include "datalogging.h"
 #include "gnss.h"
 #include "sensing.h"
 
-int main(int argc, char** argv) {
-    // Initialize the Arduino environment
+int main(void) {
     Serial.begin(9600);
-
 
     // Initialize
     sensingInit();

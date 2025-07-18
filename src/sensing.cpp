@@ -1,4 +1,4 @@
-#include <Arduino_FreeRTOS.h>
+#include <FreeRTOS_SAMD21.h>
 #include "sensing.h"
 #include <Arduino.h>
 
