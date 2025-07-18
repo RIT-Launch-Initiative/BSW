@@ -7,10 +7,9 @@
 #include <Wire.h>
 
 
-#define MS5607_ADDR 0xED
 #define HDC2080_ADDR 0x40
 
-MS5607 ms5607(MS5607_ADDR);
+MS5607 ms5607(MS56XX_ADDR_LOW, MS5607);
 HDC2080 hdc2080(HDC2080_ADDR);
 
 void sensingInit() {
