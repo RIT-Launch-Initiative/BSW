@@ -25,8 +25,8 @@ void sensingTask(void* pvParameters) {
         float ms5607Temperature = ms5607.temperature;
         float ms5607Altitude = ms5607.altitude;
 
-        float hdcTemp;
-        float hdcHum;
+        float hdcTemp = hdc2080.readTemp();
+        float hdcHum = hdc2080.readHumidity();
 
         Serial.print("MS5607 Altitude: ");
         Serial.print(ms5607Altitude);
