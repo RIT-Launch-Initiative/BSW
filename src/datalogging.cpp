@@ -1,5 +1,5 @@
+#include <Arduino_FreeRTOS.h>
 #include "datalogging.h"
-
 #include <Arduino.h>
 
 void dataloggingInit() {

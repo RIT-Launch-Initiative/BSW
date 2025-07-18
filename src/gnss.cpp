@@ -1,5 +1,5 @@
+#include <Arduino_FreeRTOS.h>
 #include "gnss.h"
-
 #include <Arduino.h>
 
 void gnssInit() {}

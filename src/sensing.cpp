@@ -1,5 +1,5 @@
+#include <Arduino_FreeRTOS.h>
 #include "sensing.h"
-
 #include <Arduino.h>
 
 void sensingInit() {

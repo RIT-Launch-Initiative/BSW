@@ -1,3 +1,5 @@
+#include <Arduino.h>
+#include <Arduino_FreeRTOS.h>
 #include "datalogging.h"
 #include "gnss.h"
 #include "sensing.h"
