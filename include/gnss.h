@@ -1,6 +1,5 @@
 #pragma once
 
-
 struct Geofence {
     float latitude;
     float longitude;

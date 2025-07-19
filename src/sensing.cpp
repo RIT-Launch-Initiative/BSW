@@ -6,7 +6,6 @@
 #include <MS56XX.h>
 #include <Wire.h>
 
-
 #define HDC2080_ADDR 0x40
 
 MS56XX ms5607(MS56XX_ADDR_LOW, MS5607);
@@ -38,11 +37,11 @@ void sensingTask(void* pvParameters) {
         Serial.print(ms5607Temperature);
         Serial.println(" C");
 
-        Serial.print("HDC2080 Temp: "); 
-        Serial.print(hdcTemp); 
+        Serial.print("HDC2080 Temp: ");
+        Serial.print(hdcTemp);
         Serial.print(" C, ");
-        Serial.print("Humidity: "); 
-        Serial.print(hdcHum); 
+        Serial.print("Humidity: ");
+        Serial.print(hdcHum);
         Serial.println(" %");
 
         vTaskDelay(pdMS_TO_TICKS(1000));
