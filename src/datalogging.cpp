@@ -13,19 +13,35 @@ static const char* SETTINGS_FILE = "/.settings";
 static const char* LOG_FILE = "/log.txt";
 static const char* CSV_FILE = "/log.csv";
 
-extern TinyGPSPlus gps;
-extern float hdcTemp;
-extern float hdcHum;
-extern float ms5607Pressure;
-extern float ms5607Altitude;
-extern Adafruit_SPIFlash flash;
-extern FatFileSystem fatfs;
+QueueHandle_t gnssQueue;
+QueueHandle_t sensingQueue;
+
+struct GnssData {
+    char time[16];
+    double latitude;
+    double longitude;
+    double altitude;
+};
+
+struct SensingData {
+    float humidity;
+    float temperature;
+    float pressure;
+    float baroAltitude;
+};
+
+Adafruit_FlashTransport_QSPI flashTransport;
+Adafruit_SPIFlash flash(&flashTransport);
+FatFileSystem fatfs;
 
 void loadSettings() {}
 
 void saveSettings() {}
 
-void dataloggingInit() {}
+void dataloggingInit() {
+    gnssQueue = xQueueCreate(4, sizeof(GnssData));
+    sensingQueue = xQueueCreate(4, sizeof(SensingData));
+}
 
 void dataloggingTask(void* pvParameters) {
     Serial.println("Datalogging task started");
@@ -41,43 +57,30 @@ void dataloggingTask(void* pvParameters) {
     } else {
         log.close();
     }
+    GnssData gnssData = {};
+    SensingData sensingData = {};
     while (1) {
-        String timeStr = "";
-        if (gps.time.isValid()) {
-            char buf[16];
-            sprintf(buf, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(),
-                    gps.time.second());
-            timeStr = buf;
-        }
-        String latStr =
-            gps.location.isValid() ? String(gps.location.lat(), 6) : "";
-        String lonStr =
-            gps.location.isValid() ? String(gps.location.lng(), 6) : "";
-        String altStr =
-            gps.altitude.isValid() ? String(gps.altitude.meters(), 2) : "";
-
-        String humidStr = String(hdcHum, 2);
-        String tempStr = String(hdcTemp, 2);
-        String presStr = String(ms5607Pressure, 2);
-        String alt2Str = String(ms5607Altitude, 2);
-
+        // Wait for latest GNSS and Sensing data
+        xQueueReceive(gnssQueue, &gnssData, 0);
+        xQueueReceive(sensingQueue, &sensingData, 0);
+        // Write to CSV
         log = fatfs.open(CSV_FILE, FILE_WRITE);
         if (log) {
-            log.print(timeStr);
+            log.print(gnssData.time);
             log.print(",");
-            log.print(latStr);
+            log.print(gnssData.latitude, 6);
             log.print(",");
-            log.print(lonStr);
+            log.print(gnssData.longitude, 6);
             log.print(",");
-            log.print(altStr);
+            log.print(gnssData.altitude, 2);
             log.print(",");
-            log.print(humidStr);
+            log.print(sensingData.humidity, 2);
             log.print(",");
-            log.print(tempStr);
+            log.print(sensingData.temperature, 2);
             log.print(",");
-            log.print(presStr);
+            log.print(sensingData.pressure, 2);
             log.print(",");
-            log.print(alt2Str);
+            log.print(sensingData.baroAltitude, 2);
             log.println();
             log.close();
         }

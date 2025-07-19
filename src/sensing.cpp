@@ -1,4 +1,5 @@
 #include "sensing.h"
+#include "datalogging.h"
 
 #include <Arduino.h>
 #include <FreeRTOS_SAMD21.h>
@@ -10,6 +11,15 @@
 
 MS56XX ms5607(MS56XX_ADDR_LOW, MS5607);
 HDC2080 hdc2080(HDC2080_ADDR);
+
+extern QueueHandle_t sensingQueue;
+
+struct SensingData {
+    float humidity;
+    float temperature;
+    float pressure;
+    float baroAltitude;
+};
 
 void sensingInit() {
     Wire.begin();
@@ -23,9 +33,15 @@ void sensingTask(void* pvParameters) {
         float ms5607Pressure = ms5607.pressure;
         float ms5607Temperature = ms5607.temperature;
         float ms5607Altitude = ms5607.altitude;
-
         float hdcTemp = hdc2080.readTemp();
         float hdcHum = hdc2080.readHumidity();
+
+        SensingData data;
+        data.humidity = hdcHum;
+        data.temperature = hdcTemp;
+        data.pressure = ms5607Pressure;
+        data.baroAltitude = ms5607Altitude;
+        xQueueOverwrite(sensingQueue, &data);
 
         Serial.print("MS5607 Altitude: ");
         Serial.print(ms5607Altitude);

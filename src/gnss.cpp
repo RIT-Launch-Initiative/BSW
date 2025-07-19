@@ -1,3 +1,4 @@
+#include "datalogging.h"
 #include "gnss.h"
 
 #include <Adafruit_SPIFlash.h>
@@ -14,6 +15,15 @@ Adafruit_FlashTransport_SPI flashTransport(EXTERNAL_FLASH_USE_CS,
                                            EXTERNAL_FLASH_USE_SPI);
 Adafruit_SPIFlash flash(&flashTransport);
 FatFileSystem fatfs;
+
+extern QueueHandle_t gnssQueue;
+
+struct GnssData {
+    char time[16];
+    double latitude;
+    double longitude;
+    double altitude;
+};
 
 static void printFloat(float val, bool valid, int len, int prec) {
     if (!valid) {
@@ -109,6 +119,16 @@ void gnssTask(void *pvParameters) {
         "--------------------------------------------------------------"));
     while (1) {
         while (Serial1.available()) gps.encode(Serial1.read());
+        GnssData data = {};
+        if (gps.time.isValid()) {
+            sprintf(data.time, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
+        } else {
+            data.time[0] = '\0';
+        }
+        data.latitude = gps.location.isValid() ? gps.location.lat() : 0.0;
+        data.longitude = gps.location.isValid() ? gps.location.lng() : 0.0;
+        data.altitude = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
+        xQueueOverwrite(gnssQueue, &data);
         printInt(gps.satellites.value(), gps.satellites.isValid(), 5);
         printFloat(gps.hdop.hdop(), gps.hdop.isValid(), 6, 1);
         printFloat(gps.location.lat(), gps.location.isValid(), 11, 6);
@@ -118,9 +138,7 @@ void gnssTask(void *pvParameters) {
         printFloat(gps.altitude.meters(), gps.altitude.isValid(), 7, 2);
         printFloat(gps.course.deg(), gps.course.isValid(), 7, 2);
         printFloat(gps.speed.kmph(), gps.speed.isValid(), 6, 2);
-        printStr(gps.course.isValid() ? TinyGPSPlus::cardinal(gps.course.deg())
-                                      : "*** ",
-                 6);
+        printStr(gps.course.isValid() ? TinyGPSPlus::cardinal(gps.course.deg()) : "*** ", 6);
         printInt(gps.charsProcessed(), true, 6);
         printInt(gps.sentencesWithFix(), true, 10);
         printInt(gps.failedChecksum(), true, 9);
