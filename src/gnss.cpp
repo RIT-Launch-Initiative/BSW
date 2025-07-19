@@ -1,5 +1,6 @@
 #include "datalogging.h"
 #include "gnss.h"
+#include "types.h"
 
 #include <Adafruit_SPIFlash.h>
 #include <Arduino.h>
@@ -11,19 +12,10 @@ static size_t geofenceCount = 0;
 
 static const uint32_t GPSBaud = 9600;
 TinyGPSPlus gps;
-Adafruit_FlashTransport_SPI flashTransport(EXTERNAL_FLASH_USE_CS,
-                                           EXTERNAL_FLASH_USE_SPI);
-Adafruit_SPIFlash flash(&flashTransport);
-FatFileSystem fatfs;
+extern Adafruit_SPIFlash flash;
+extern FatFileSystem fatfs;
 
 extern QueueHandle_t gnssQueue;
-
-struct GnssData {
-    char time[16];
-    double latitude;
-    double longitude;
-    double altitude;
-};
 
 static void printFloat(float val, bool valid, int len, int prec) {
     if (!valid) {

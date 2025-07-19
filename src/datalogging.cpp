@@ -1,4 +1,5 @@
 #include "datalogging.h"
+#include "types.h"
 
 #include <Adafruit_SPIFlash.h>
 #include <Arduino.h>
@@ -6,31 +7,17 @@
 #include <TinyGPS++.h>
 
 Settings g_settings;
-uint32_t g_bootcount = 0;
+uint32_t bootcount = 0;
 
 static const char* BOOTCOUNT_FILE = "/.bootcount";
 static const char* SETTINGS_FILE = "/.settings";
 static const char* LOG_FILE = "/log.txt";
-static const char* CSV_FILE = "/log.csv";
+static char CSV_FILE[32] = "";
 
 QueueHandle_t gnssQueue;
 QueueHandle_t sensingQueue;
 
-struct GnssData {
-    char time[16];
-    double latitude;
-    double longitude;
-    double altitude;
-};
-
-struct SensingData {
-    float humidity;
-    float temperature;
-    float pressure;
-    float baroAltitude;
-};
-
-Adafruit_FlashTransport_QSPI flashTransport;
+Adafruit_FlashTransport_SPI flashTransport(EXTERNAL_FLASH_USE_CS, EXTERNAL_FLASH_USE_SPI);
 Adafruit_SPIFlash flash(&flashTransport);
 FatFileSystem fatfs;
 
@@ -41,30 +28,45 @@ void saveSettings() {}
 void dataloggingInit() {
     gnssQueue = xQueueCreate(4, sizeof(GnssData));
     sensingQueue = xQueueCreate(4, sizeof(SensingData));
+
+    File file = fatfs.open(BOOTCOUNT_FILE, FILE_READ);
+    if (!file) {
+        bootcount = 1;
+        file = fatfs.open(BOOTCOUNT_FILE, FILE_WRITE);
+        if (file) {
+            file.print(bootcount);
+            file.close();
+        }
+    } else {
+        bootcount = file.parseInt() + 1;
+        file.close();
+        file = fatfs.open(BOOTCOUNT_FILE, FILE_WRITE);
+        if (file) {
+            file.print(bootcount);
+            file.close();
+        }
+    }
+
+    char indexedLogFile[32];
+    snprintf(indexedLogFile, sizeof(indexedLogFile), "/data/log_%lu.csv", (unsigned long)bootcount);
+    File log = fatfs.open(indexedLogFile, FILE_WRITE);
+    if (log) {
+        log.println("Time,Latitude,Longitude,Altitude,Humidity,Temperature,Pressure,AltitudeTime");
+        log.close();
+    }
+
+    strncpy((char*)CSV_FILE, indexedLogFile, sizeof(indexedLogFile));
 }
 
 void dataloggingTask(void* pvParameters) {
     Serial.println("Datalogging task started");
-    File log = fatfs.open(CSV_FILE, FILE_READ);
-    if (!log) {
-        log = fatfs.open(CSV_FILE, FILE_WRITE);
-        if (log) {
-            log.println(
-                "Time,Latitude,Longitude,Altitude,Humidity,Temperature,"
-                "Pressure,AltitudeTime");
-            log.close();
-        }
-    } else {
-        log.close();
-    }
     GnssData gnssData = {};
     SensingData sensingData = {};
     while (1) {
-        // Wait for latest GNSS and Sensing data
         xQueueReceive(gnssQueue, &gnssData, 0);
         xQueueReceive(sensingQueue, &sensingData, 0);
         // Write to CSV
-        log = fatfs.open(CSV_FILE, FILE_WRITE);
+        File log = fatfs.open(CSV_FILE, FILE_WRITE);
         if (log) {
             log.print(gnssData.time);
             log.print(",");

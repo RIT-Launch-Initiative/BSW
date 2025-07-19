@@ -1,5 +1,6 @@
 #include "sensing.h"
 #include "datalogging.h"
+#include "types.h"
 
 #include <Arduino.h>
 #include <FreeRTOS_SAMD21.h>
@@ -13,13 +14,6 @@ MS56XX ms5607(MS56XX_ADDR_LOW, MS5607);
 HDC2080 hdc2080(HDC2080_ADDR);
 
 extern QueueHandle_t sensingQueue;
-
-struct SensingData {
-    float humidity;
-    float temperature;
-    float pressure;
-    float baroAltitude;
-};
 
 void sensingInit() {
     Wire.begin();
