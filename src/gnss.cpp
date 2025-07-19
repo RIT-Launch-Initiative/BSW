@@ -1,8 +1,8 @@
 #include "gnss.h"
 
+#include <Adafruit_SPIFlash.h>
 #include <Arduino.h>
 #include <FreeRTOS_SAMD21.h>
-#include <LittleFS_Arduino.h>
 #include <TinyGPS++.h>
 
 static Geofence geofences[32]{0};
@@ -10,6 +10,10 @@ static size_t geofenceCount = 0;
 
 static const uint32_t GPSBaud = 9600;
 TinyGPSPlus gps;
+Adafruit_FlashTransport_SPI flashTransport(EXTERNAL_FLASH_USE_CS,
+                                           EXTERNAL_FLASH_USE_SPI);
+Adafruit_SPIFlash flash(&flashTransport);
+FatFileSystem fatfs;
 
 static void printFloat(float val, bool valid, int len, int prec) {
     if (!valid) {
@@ -71,20 +75,28 @@ static bool isWithinGeofence() {
 }
 
 void loadGeofences() {
-    File f = LittleFS_Arduino::open("/geofences", "r");
-    if (!f) {
+    if (!fatfs.begin(&flash)) {
         geofenceCount = 0;
         return;
     }
-    size_t fileSize = f.size();
+
+    File file = fatfs.open("/geofences", FILE_READ);
+    if (!file) {
+        geofenceCount = 0;
+        return;
+    }
+
+    size_t fileSize = file.size();
     size_t structSize = sizeof(Geofence);
     geofenceCount = fileSize / structSize;
     if (geofenceCount > 32) geofenceCount = 32;
-    f.read((uint8_t *)geofences, geofenceCount * structSize);
-    f.close();
+    file.read((uint8_t *)geofences, geofenceCount * structSize);
+    file.close();
 }
 
-void gnssInit() { Serial1.begin(GPSBaud); }
+void gnssInit() { 
+    Serial1.begin(GPSBaud); 
+}
 
 void gnssTask(void *pvParameters) {
     Serial.println("GNSS task started");
