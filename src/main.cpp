@@ -13,7 +13,7 @@ void setup() {
     gnssInit();
 
 
-    // xTaskCreate(sensingTask, "Sensing Task", 4096, NULL, 1, NULL);
+    xTaskCreate(sensingTask, "Sensing Task", 4096, NULL, 1, NULL);
     // xTaskCreate(dataloggingTask, "Datalogging Task", 4096, NULL, 1, NULL);
     // xTaskCreate(gnssTask, "GNSS Task", 4096, NULL, 1, NULL);
 }

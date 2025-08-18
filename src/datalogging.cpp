@@ -64,34 +64,39 @@ void dataloggingInit() {
     Serial.println(CSV_FILE);
 }
 
-void dataloggingTask(void* pvParameters) {
-    Serial.println("Datalogging task started");
+void dataloggingExecute() {
     GnssData gnssData = {};
     SensingData sensingData = {};
+    
+    xQueueReceive(gnssQueue, &gnssData, 0);
+    xQueueReceive(sensingQueue, &sensingData, 0);
+    // Write to CSV
+    File log = fatfs.open(CSV_FILE, FILE_WRITE);
+    if (log) {
+        log.print(gnssData.time);
+        log.print(",");
+        log.print(gnssData.latitude, 6);
+        log.print(",");
+        log.print(gnssData.longitude, 6);
+        log.print(",");
+        log.print(gnssData.altitude, 2);
+        log.print(",");
+        log.print(sensingData.humidity, 2);
+        log.print(",");
+        log.print(sensingData.temperature, 2);
+        log.print(",");
+        log.print(sensingData.pressure, 2);
+        log.print(",");
+        log.print(sensingData.baroAltitude, 2);
+        log.println();
+        log.close();
+    }
+}
+
+void dataloggingTask(void* pvParameters) {
+    Serial.println("Datalogging task started");
     while (1) {
-        xQueueReceive(gnssQueue, &gnssData, 0);
-        xQueueReceive(sensingQueue, &sensingData, 0);
-        // Write to CSV
-        File log = fatfs.open(CSV_FILE, FILE_WRITE);
-        if (log) {
-            log.print(gnssData.time);
-            log.print(",");
-            log.print(gnssData.latitude, 6);
-            log.print(",");
-            log.print(gnssData.longitude, 6);
-            log.print(",");
-            log.print(gnssData.altitude, 2);
-            log.print(",");
-            log.print(sensingData.humidity, 2);
-            log.print(",");
-            log.print(sensingData.temperature, 2);
-            log.print(",");
-            log.print(sensingData.pressure, 2);
-            log.print(",");
-            log.print(sensingData.baroAltitude, 2);
-            log.println();
-            log.close();
-        }
+        dataloggingExecute();
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
