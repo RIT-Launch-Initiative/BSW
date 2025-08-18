@@ -56,6 +56,12 @@ void dataloggingInit() {
     }
 
     strncpy((char*)CSV_FILE, indexedLogFile, sizeof(indexedLogFile));
+
+    Serial.println("Datalogging initialized");
+    Serial.print("Boot count: ");
+    Serial.println(bootcount);
+    Serial.print("Log file: ");
+    Serial.println(CSV_FILE);
 }
 
 void dataloggingTask(void* pvParameters) {

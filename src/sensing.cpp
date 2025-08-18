@@ -18,6 +18,9 @@ extern QueueHandle_t sensingQueue;
 void sensingInit() {
     Wire.begin();
     ms5607.begin();
+    hdc2080.begin();
+
+    Serial.println("Sensors initialized");
 }
 
 void sensingTask(void* pvParameters) {

@@ -96,7 +96,10 @@ void loadGeofences() {
     file.close();
 }
 
-void gnssInit() { Serial1.begin(GPSBaud); }
+void gnssInit() {
+    Serial1.begin(GPSBaud); 
+    Serial.println("GNSS initialized");
+}
 
 void gnssTask(void *pvParameters) {
     Serial.println("GNSS task started");
