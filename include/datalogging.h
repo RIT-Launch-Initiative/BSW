@@ -7,4 +7,5 @@ struct Settings {
 };
 
 void dataloggingInit();
+void dataloggingExecute();
 void dataloggingTask(void* pvParameters);

@@ -12,14 +12,13 @@ void setup() {
     dataloggingInit();
     gnssInit();
 
-
-    xTaskCreate(sensingTask, "Sensing Task", 4096, NULL, 1, NULL);
-    // xTaskCreate(dataloggingTask, "Datalogging Task", 4096, NULL, 1, NULL);
-    // xTaskCreate(gnssTask, "GNSS Task", 4096, NULL, 1, NULL);
+    // xTaskCreate(sensingTask, "Sensing Task", 8192, NULL, 1, NULL);
+    // xTaskCreate(dataloggingTask, "Datalogging Task", 8192, NULL, 1, NULL);
+    // xTaskCreate(gnssTask, "GNSS Task", 8192, NULL, 1, NULL);
 }
 
 void loop() {
     Serial.println("Main loop running");
-    delay(1000);
+    sensingExecute();
     
 }
