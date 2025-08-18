@@ -101,6 +101,37 @@ void gnssInit() {
     Serial.println("GNSS initialized");
 }
 
+void gnssExecute() {
+    while (Serial1.available()) gps.encode(Serial1.read());
+    GnssData data = {};
+    if (gps.time.isValid()) {
+        sprintf(data.time, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(),
+                gps.time.second());
+    } else {
+        data.time[0] = '\0';
+    }
+    data.latitude = gps.location.isValid() ? gps.location.lat() : 0.0;
+    data.longitude = gps.location.isValid() ? gps.location.lng() : 0.0;
+    data.altitude = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
+    xQueueOverwrite(gnssQueue, &data);
+    printInt(gps.satellites.value(), gps.satellites.isValid(), 5);
+    printFloat(gps.hdop.hdop(), gps.hdop.isValid(), 6, 1);
+    printFloat(gps.location.lat(), gps.location.isValid(), 11, 6);
+    printFloat(gps.location.lng(), gps.location.isValid(), 12, 6);
+    printInt(gps.location.age(), gps.location.isValid(), 5);
+    printDateTime(gps.date, gps.time);
+    printFloat(gps.altitude.meters(), gps.altitude.isValid(), 7, 2);
+    printFloat(gps.course.deg(), gps.course.isValid(), 7, 2);
+    printFloat(gps.speed.kmph(), gps.speed.isValid(), 6, 2);
+    printStr(
+        gps.course.isValid() ? TinyGPSPlus::cardinal(gps.course.deg()) : "*** ",
+        6);
+    printInt(gps.charsProcessed(), true, 6);
+    printInt(gps.sentencesWithFix(), true, 10);
+    printInt(gps.failedChecksum(), true, 9);
+    Serial.println();
+}
+
 void gnssTask(void *pvParameters) {
     Serial.println("GNSS task started");
     Serial.println(F(
@@ -113,31 +144,7 @@ void gnssTask(void *pvParameters) {
         "----------------------------------------------------------------------"
         "--------------------------------------------------------------"));
     while (1) {
-        while (Serial1.available()) gps.encode(Serial1.read());
-        GnssData data = {};
-        if (gps.time.isValid()) {
-            sprintf(data.time, "%02d:%02d:%02d", gps.time.hour(), gps.time.minute(), gps.time.second());
-        } else {
-            data.time[0] = '\0';
-        }
-        data.latitude = gps.location.isValid() ? gps.location.lat() : 0.0;
-        data.longitude = gps.location.isValid() ? gps.location.lng() : 0.0;
-        data.altitude = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
-        xQueueOverwrite(gnssQueue, &data);
-        printInt(gps.satellites.value(), gps.satellites.isValid(), 5);
-        printFloat(gps.hdop.hdop(), gps.hdop.isValid(), 6, 1);
-        printFloat(gps.location.lat(), gps.location.isValid(), 11, 6);
-        printFloat(gps.location.lng(), gps.location.isValid(), 12, 6);
-        printInt(gps.location.age(), gps.location.isValid(), 5);
-        printDateTime(gps.date, gps.time);
-        printFloat(gps.altitude.meters(), gps.altitude.isValid(), 7, 2);
-        printFloat(gps.course.deg(), gps.course.isValid(), 7, 2);
-        printFloat(gps.speed.kmph(), gps.speed.isValid(), 6, 2);
-        printStr(gps.course.isValid() ? TinyGPSPlus::cardinal(gps.course.deg()) : "*** ", 6);
-        printInt(gps.charsProcessed(), true, 6);
-        printInt(gps.sentencesWithFix(), true, 10);
-        printInt(gps.failedChecksum(), true, 9);
-        Serial.println();
-        vTaskDelay(pdMS_TO_TICKS(1000));
+       gnssExecute();
+       vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
