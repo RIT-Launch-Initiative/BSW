@@ -101,7 +101,7 @@ void dataloggingExecute() {
 
 void dataloggingTask(void* pvParameters) {
     Serial.println("Datalogging task started");
-    while (1) {
+    while (true) {
         dataloggingExecute();
         vTaskDelay(pdMS_TO_TICKS(1000));
     }

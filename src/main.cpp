@@ -20,5 +20,4 @@ void setup() {
 void loop() {
     Serial.println("Main loop running");
     sensingExecute();
-    
 }
