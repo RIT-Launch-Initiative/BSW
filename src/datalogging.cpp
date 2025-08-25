@@ -12,7 +12,8 @@ uint32_t bootcount = 0;
 static const char* BOOTCOUNT_FILE = "/.bootcount";
 static const char* SETTINGS_FILE = "/.settings";
 static const char* LOG_FILE = "/log.txt";
-static char CSV_FILE[32] = "";
+static constexpr size_t FILE_NAME_SIZE = 32;
+static char CSV_FILE[FILE_NAME_SIZE] = "";
 
 QueueHandle_t gnssQueue;
 QueueHandle_t sensingQueue;
@@ -52,15 +53,15 @@ void dataloggingInit() {
         }
     }
 
-    char indexedLogFile[32];
-    snprintf(indexedLogFile, sizeof(indexedLogFile), "/data/log_%lu.csv", (unsigned long)bootcount);
+    char indexedLogFile[FILE_NAME_SIZE] = {0};
+    snprintf(indexedLogFile, FILE_NAME_SIZE, "/data/log_%lu.csv", (unsigned long)bootcount);
     File log = fatfs.open(indexedLogFile, FILE_WRITE);
     if (log) {
         log.println("Time,Latitude,Longitude,Altitude,Humidity,Temperature,Pressure,AltitudeTime");
         log.close();
     }
 
-    strncpy((char*)CSV_FILE, indexedLogFile, sizeof(indexedLogFile));
+    strncpy((char*)CSV_FILE, indexedLogFile, FILE_NAME_SIZE);
 
     Serial.println("Datalogging initialized");
     Serial.print("Boot count: ");
