@@ -29,6 +29,11 @@ void dataloggingInit() {
     gnssQueue = xQueueCreate(4, sizeof(GnssData));
     sensingQueue = xQueueCreate(4, sizeof(SensingData));
 
+    if (!fatfs.begin(&flash)) {
+        Serial.println("Failed to initialize filesystem!");
+        return;
+    }
+
     File file = fatfs.open(BOOTCOUNT_FILE, FILE_READ);
     if (!file) {
         bootcount = 1;
