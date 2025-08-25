@@ -7,7 +7,8 @@
 #include <FreeRTOS_SAMD21.h>
 #include <TinyGPS++.h>
 
-static Geofence geofences[32]{0};
+static constexpr size_t MAX_GEOFENCES = 32;
+static Geofence geofences[MAX_GEOFENCES]{0};
 static size_t geofenceCount = 0;
 
 static const uint32_t GPSBaud = 9600;
@@ -91,7 +92,7 @@ void loadGeofences() {
     size_t fileSize = file.size();
     size_t structSize = sizeof(Geofence);
     geofenceCount = fileSize / structSize;
-    if (geofenceCount > 32) geofenceCount = 32;
+    if (geofenceCount > MAX_GEOFENCES) geofenceCount = MAX_GEOFENCES;
     file.read((uint8_t *)geofences, geofenceCount * structSize);
     file.close();
 }
