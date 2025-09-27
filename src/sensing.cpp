@@ -32,6 +32,7 @@ void sensingInit() {
 
 void sensingExecute(SensingData& data) {
     ms5607.doBaro(true);
+    hdc2080.triggerMeasurement();
 
     data.humidity = hdc2080.readHumidity();
     data.hdcTemperature = hdc2080.readTemp();
