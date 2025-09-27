@@ -15,10 +15,18 @@ HDC2080 hdc2080(HDC2080_ADDR);
 
 extern QueueHandle_t sensingQueue;
 
+static void hdc2080Init() {
+
+    hdc2080.begin();
+    hdc2080.setRate(ONE_HZ)
+    hdc2080.setMeasurementMode(TEMP_AND_HUMID);
+    hdc2080.setTempRes(FOURTEEN_BIT);
+    hdc2080.setHumidRes(FOURTEEN_BIT);
+}
+
 void sensingInit() {
     Wire.begin();
     ms5607.begin();
-    hdc2080.begin();
 
     Serial.println("Sensors initialized");
 }
