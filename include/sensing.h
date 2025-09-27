@@ -3,5 +3,5 @@
 #include <types.h>
 
 void sensingInit();
-void sensingExecute(SensingData& data, const bool debug);
+void sensingExecute(SensingData& data);
 void sensingTask(void* pvParameters);

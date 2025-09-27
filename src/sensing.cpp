@@ -30,39 +30,15 @@ void sensingInit() {
     Serial.println("Sensors initialized");
 }
 
-void sensingExecute(SensingData& data, const bool debug) {
+void sensingExecute(SensingData& data) {
     ms5607.doBaro(true);
-    float ms5607Pressure = ms5607.pressure;
-    float ms5607Temperature = ms5607.temperature;
-    float ms5607Altitude = ms5607.altitude;
 
-    Serial.println("read ms5607");
+    data.humidity = hdc2080.readHumidity();
+    data.hdcTemperature = hdc2080.readTemp();
 
-    float hdcTemp = hdc2080.readTemp();
-    float hdcHum = hdc2080.readHumidity();
-    
-
-    data.humidity = hdcHum;
-    data.temperature = hdcTemp;
-    data.pressure = ms5607Pressure;
-    data.baroAltitude = ms5607Altitude;
-
-    Serial.print("MS5607 Altitude: ");
-    Serial.print(ms5607Altitude);
-    Serial.print(" m, ");
-    Serial.print("Pressure: ");
-    Serial.print(ms5607Pressure);
-    Serial.print(" mbar, ");
-    Serial.print("Temp: ");
-    Serial.print(ms5607Temperature);
-    Serial.println(" C");
-
-    Serial.print("HDC2080 Temp: ");
-    Serial.print(hdcTemp);
-    Serial.print(" C, ");
-    Serial.print("Humidity: ");
-    Serial.print(hdcHum);
-    Serial.println(" %");
+    data.pressure = ms5607.pressure;
+    data.temperature = ms5607.temperature;
+    data.baroAltitude = ms5607.altitude;
 }
 
 void sensingTask(void* pvParameters) {
@@ -70,7 +46,7 @@ void sensingTask(void* pvParameters) {
 
     SensingData data;
     while (true) {
-        sensingExecute(data, false);
+        sensingExecute(data);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
