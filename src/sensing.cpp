@@ -13,13 +13,20 @@
 MS56XX ms5607(MS56XX_ADDR_LOW, MS5607);
 HDC2080 hdc2080(HDC2080_ADDR);
 
+uint8_t HDC2080_OFFSET_LSB = 90; // offset / 0.16 = 14 / 0.16 = 90
+
 static void hdc2080Init() {
 
     hdc2080.begin();
+    hdc2080.reset();
+
     hdc2080.setRate(ONE_HZ);
     hdc2080.setMeasurementMode(TEMP_AND_HUMID);
     hdc2080.setTempRes(FOURTEEN_BIT);
     hdc2080.setHumidRes(FOURTEEN_BIT);
+
+    // This will have measurements trigger periodically
+    hdc2080.triggerMeasurement();
 }
 
 void sensingInit() {
@@ -32,7 +39,7 @@ void sensingInit() {
 
 void sensingExecute(SensingData& data) {
     ms5607.doBaro(true);
-    hdc2080.triggerMeasurement();
+    // HDC2080 doesn't need a call if setup properly
 
     data.humidity = hdc2080.readHumidity();
     data.hdcTemperature = hdc2080.readTemp();
@@ -40,6 +47,7 @@ void sensingExecute(SensingData& data) {
     data.pressure = ms5607.pressure;
     data.temperature = ms5607.temperature;
     data.baroAltitude = ms5607.altitude;
+
 }
 
 void sensingTask(void* pvParameters) {

@@ -21,10 +21,10 @@ static void printSensingData() {
     Serial.println(" C");
 
     Serial.print("HDC2080 Temp: ");
-    Serial.print(data.humidity);
+    Serial.print(data.hdcTemperature);
     Serial.print(" C, ");
     Serial.print("Humidity: ");
-    Serial.print(data.hdcTemperature);
+    Serial.print(data.humidity);
     Serial.println(" %");
 }
 
