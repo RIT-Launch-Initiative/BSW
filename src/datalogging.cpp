@@ -29,12 +29,28 @@ void saveSettings() {}
 void dataloggingInit() {
     gnssQueue = xQueueCreate(4, sizeof(GnssData));
     sensingQueue = xQueueCreate(4, sizeof(SensingData));
+    
+    if (!flash.begin()) {
+        Serial.println("Error, failed to initialize flash chip!");
+        return;
+    }
 
+    Serial.println("Initializing filesystem on SD card);
     if (!fatfs.begin(&flash)) {
         Serial.println("Failed to initialize filesystem!");
         return;
     }
 
+    // Print SD card specs
+    uint32_t cardSize = flash.size();
+    Serial.print("SD Card Size: ");
+    Serial.print(cardSize / (1024 * 1024));
+    Serial.println(" MB");
+    Serial.print("Flash JEDEC ID: 0x");
+    Serial.println(flash.getJEDECID(), HEX);
+    // Removed invalid flash.capacity() usage
+
+    // Bootcount logic
     File file = fatfs.open(BOOTCOUNT_FILE, FILE_READ);
     if (!file) {
         bootcount = 1;
