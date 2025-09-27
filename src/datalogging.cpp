@@ -35,7 +35,7 @@ void dataloggingInit() {
         return;
     }
 
-    Serial.println("Initializing filesystem on SD card);
+    Serial.println("Initializing filesystem on SD card");
     if (!fatfs.begin(&flash)) {
         Serial.println("Failed to initialize filesystem!");
         return;
