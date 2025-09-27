@@ -8,18 +8,15 @@ bool DEBUG = true;
 
 void setup() {
     Serial.begin(115200);
-    delay(5000);
+    delay(3000);
 
     sensingInit();
     dataloggingInit();
     gnssInit();
-
-    // xTaskCreate(sensingTask, "Sensing Task", 8192, NULL, 1, NULL);
-    // xTaskCreate(dataloggingTask, "Datalogging Task", 8192, NULL, 1, NULL);
-    // xTaskCreate(gnssTask, "GNSS Task", 8192, NULL, 1, NULL);
 }
 
 void loop() {
     sensingExecute(DEBUG);
-    delay(1000);
+    Serial.println("-----");
+    // delay(1000);
 }

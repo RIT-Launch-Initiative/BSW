@@ -13,12 +13,10 @@
 MS56XX ms5607(MS56XX_ADDR_LOW, MS5607);
 HDC2080 hdc2080(HDC2080_ADDR);
 
-extern QueueHandle_t sensingQueue;
-
 static void hdc2080Init() {
 
     hdc2080.begin();
-    hdc2080.setRate(ONE_HZ)
+    hdc2080.setRate(ONE_HZ);
     hdc2080.setMeasurementMode(TEMP_AND_HUMID);
     hdc2080.setTempRes(FOURTEEN_BIT);
     hdc2080.setHumidRes(FOURTEEN_BIT);
@@ -27,6 +25,7 @@ static void hdc2080Init() {
 void sensingInit() {
     Wire.begin();
     ms5607.begin();
+    hdc2080Init();
 
     Serial.println("Sensors initialized");
 }
@@ -36,17 +35,18 @@ void sensingExecute(const bool debug) {
     float ms5607Pressure = ms5607.pressure;
     float ms5607Temperature = ms5607.temperature;
     float ms5607Altitude = ms5607.altitude;
+
+    Serial.println("read ms5607");
+
     float hdcTemp = hdc2080.readTemp();
     float hdcHum = hdc2080.readHumidity();
+    
 
     SensingData data;
     data.humidity = hdcHum;
     data.temperature = hdcTemp;
     data.pressure = ms5607Pressure;
     data.baroAltitude = ms5607Altitude;
-    xQueueOverwrite(sensingQueue, &data);
-
-    if (!debug) return;
 
     Serial.print("MS5607 Altitude: ");
     Serial.print(ms5607Altitude);
