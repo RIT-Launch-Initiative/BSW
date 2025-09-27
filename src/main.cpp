@@ -4,6 +4,8 @@
 #include "gnss.h"
 #include "sensing.h"
 
+bool DEBUG = true;
+
 void setup() {
     Serial.begin(115200);
     delay(5000);
@@ -18,6 +20,6 @@ void setup() {
 }
 
 void loop() {
-    Serial.println("Main loop running");
-    sensingExecute();
+    sensingExecute(DEBUG);
+    delay(1000);
 }

@@ -23,7 +23,7 @@ void sensingInit() {
     Serial.println("Sensors initialized");
 }
 
-void sensingExecute() {
+void sensingExecute(const bool debug) {
     ms5607.doBaro(true);
     float ms5607Pressure = ms5607.pressure;
     float ms5607Temperature = ms5607.temperature;
@@ -37,6 +37,8 @@ void sensingExecute() {
     data.pressure = ms5607Pressure;
     data.baroAltitude = ms5607Altitude;
     xQueueOverwrite(sensingQueue, &data);
+
+    if (!debug) return;
 
     Serial.print("MS5607 Altitude: ");
     Serial.print(ms5607Altitude);
@@ -59,7 +61,7 @@ void sensingExecute() {
 void sensingTask(void* pvParameters) {
     Serial.println("Sensing task started");
     while (true) {
-        sensingExecute();
+        sensingExecute(false);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
