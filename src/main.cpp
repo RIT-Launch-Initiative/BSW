@@ -7,7 +7,7 @@
 
 bool DEBUG = true;
 
-SensingData data;
+static SensingData data;
 
 void setup() {
     Serial.begin(115200);
@@ -19,7 +19,7 @@ void setup() {
 }
 
 void loop() {
-    sensingExecute(&data, DEBUG);
+    sensingExecute(data, DEBUG);
     Serial.println("-----");
     // delay(1000);
 }

@@ -67,8 +67,10 @@ void sensingExecute(SensingData& data, const bool debug) {
 
 void sensingTask(void* pvParameters) {
     Serial.println("Sensing task started");
+
+    SensingData data;
     while (true) {
-        sensingExecute(false);
+        sensingExecute(data, false);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
