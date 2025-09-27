@@ -30,7 +30,7 @@ void sensingInit() {
     Serial.println("Sensors initialized");
 }
 
-void sensingExecute(const bool debug) {
+void sensingExecute(SensingData& data, const bool debug) {
     ms5607.doBaro(true);
     float ms5607Pressure = ms5607.pressure;
     float ms5607Temperature = ms5607.temperature;
@@ -42,7 +42,6 @@ void sensingExecute(const bool debug) {
     float hdcHum = hdc2080.readHumidity();
     
 
-    SensingData data;
     data.humidity = hdcHum;
     data.temperature = hdcTemp;
     data.pressure = ms5607Pressure;
