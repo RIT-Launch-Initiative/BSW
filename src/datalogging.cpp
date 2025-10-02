@@ -1,10 +1,13 @@
 #include "datalogging.h"
 #include "types.h"
 
-#include <Adafruit_SPIFlash.h>
+#include <SPI.h>
+#include <SdFat.h>
 #include <Arduino.h>
 #include <FreeRTOS_SAMD21.h>
 #include <TinyGPS++.h>
+
+#define SD_CS_PIN 2 // Digital Pin 2
 
 Settings g_settings;
 uint32_t bootcount = 0;
@@ -18,9 +21,8 @@ static char CSV_FILE[FILE_NAME_SIZE] = "";
 QueueHandle_t gnssQueue;
 QueueHandle_t sensingQueue;
 
-Adafruit_FlashTransport_SPI flashTransport(EXTERNAL_FLASH_USE_CS, EXTERNAL_FLASH_USE_SPI);
-Adafruit_SPIFlash flash(&flashTransport);
-FatFileSystem fatfs;
+
+SdFat sd;
 
 void loadSettings() {}
 
@@ -30,31 +32,28 @@ void dataloggingInit() {
     gnssQueue = xQueueCreate(4, sizeof(GnssData));
     sensingQueue = xQueueCreate(4, sizeof(SensingData));
     
-    if (!flash.begin()) {
-        Serial.println("Error, failed to initialize flash chip!");
+
+    Serial.println("Initializing SD card...");
+    if (!sd.begin(SD_CS_PIN)) {
+        Serial.println("Failed to initialize SD card!");
         return;
     }
 
-    Serial.println("Initializing filesystem on SD card");
-    if (!fatfs.begin(&flash)) {
-        Serial.println("Failed to initialize filesystem!");
-        return;
+    uint32_t cardSize = sd.card()->sectorCount();
+    if (cardSize == 0) {
+        Serial.println("Could not read SD card size!");
+    } else {
+        Serial.print("SD Card Size: ");
+        Serial.print((cardSize / 2048.0), 2); // MB
+        Serial.println(" MB");
     }
-
-    // Print SD card specs
-    uint32_t cardSize = flash.size();
-    Serial.print("SD Card Size: ");
-    Serial.print(cardSize / (1024 * 1024));
-    Serial.println(" MB");
-    Serial.print("Flash JEDEC ID: 0x");
-    Serial.println(flash.getJEDECID(), HEX);
-    // Removed invalid flash.capacity() usage
 
     // Bootcount logic
-    File file = fatfs.open(BOOTCOUNT_FILE, FILE_READ);
+    File file = sd.open(BOOTCOUNT_FILE, FILE_READ);
     if (!file) {
         bootcount = 1;
-        file = fatfs.open(BOOTCOUNT_FILE, FILE_WRITE);
+        file.close();
+        file = sd.open(BOOTCOUNT_FILE, FILE_WRITE);
         if (file) {
             file.print(bootcount);
             file.close();
@@ -62,7 +61,7 @@ void dataloggingInit() {
     } else {
         bootcount = file.parseInt() + 1;
         file.close();
-        file = fatfs.open(BOOTCOUNT_FILE, FILE_WRITE);
+        file = sd.open(BOOTCOUNT_FILE, FILE_WRITE);
         if (file) {
             file.print(bootcount);
             file.close();
@@ -70,8 +69,8 @@ void dataloggingInit() {
     }
 
     char indexedLogFile[FILE_NAME_SIZE] = {0};
-    snprintf(indexedLogFile, FILE_NAME_SIZE, "/data/log_%lu.csv", (unsigned long)bootcount);
-    File log = fatfs.open(indexedLogFile, FILE_WRITE);
+    snprintf(indexedLogFile, FILE_NAME_SIZE, "log_%lu.csv", (unsigned long)bootcount);
+    File log = sd.open(indexedLogFile, FILE_WRITE);
     if (log) {
         log.println("Time,Latitude,Longitude,Altitude,Humidity,Temperature,Pressure,AltitudeTime");
         log.close();
@@ -93,7 +92,7 @@ void dataloggingExecute() {
     xQueueReceive(gnssQueue, &gnssData, 0);
     xQueueReceive(sensingQueue, &sensingData, 0);
     // Write to CSV
-    File log = fatfs.open(CSV_FILE, FILE_WRITE);
+    File log = sd.open(CSV_FILE, FILE_WRITE);
     if (log) {
         log.print(gnssData.time);
         log.print(",");
