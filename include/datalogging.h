@@ -7,5 +7,5 @@ struct Settings {
 };
 
 void dataloggingInit();
-void dataloggingExecute();
+void dataloggingExecute(const GnssData& gnssData, const SensingData& sensingData);
 void dataloggingTask(void* pvParameters);

@@ -18,8 +18,6 @@ uint32_t bootcount = 0;
 static const char* BOOTCOUNT_FILE = "/.bootcount";
 static char CSV_FILE[FILE_NAME_SIZE] = "";
 
-QueueHandle_t gnssQueue = nullptr;
-QueueHandle_t sensingQueue = nullptr;
 
 SdFs sd;
 
@@ -52,10 +50,9 @@ static bool appendCsvHeaderIfNew(const char* path) {
 }
 
 void dataloggingInit() {
-    gnssQueue = xQueueCreate(4, sizeof(GnssData));
-    sensingQueue = xQueueCreate(4, sizeof(SensingData));
 
-    Serial.println("Initializing SD (SdFs)...");
+
+    Serial.println("Initializing SD");
     pinMode(MISO, INPUT_PULLUP);
     pinMode(SD_CS_PIN, OUTPUT);
     digitalWrite(SD_CS_PIN, HIGH);
@@ -76,7 +73,7 @@ void dataloggingInit() {
     }
     Serial.println("cardBegin succeeded");
 
-    Serial.println("mounting FS");
+    Serial.println("Mounting FS");
     if (!sd.begin(cfg)) {
         Serial.print("FS mount failed sdErr=0x");
         Serial.print(sd.sdErrorCode(), HEX);
@@ -90,7 +87,7 @@ void dataloggingInit() {
     bootcount = readUintFromFile(BOOTCOUNT_FILE, 0) + 1;
     writeUintToFile(BOOTCOUNT_FILE, bootcount);
 
-    // Log file name (root for simplicity)
+    // Log file name
     char indexedLogFile[FILE_NAME_SIZE] = {0};
     snprintf(indexedLogFile, FILE_NAME_SIZE, "log_%lu.csv",
              (unsigned long)bootcount);
@@ -104,12 +101,11 @@ void dataloggingInit() {
     Serial.println(CSV_FILE);
 }
 
-void dataloggingExecute() {
-    GnssData gnssData = {};
-    SensingData sensingData = {};
-
-
-    if (!CSV_FILE[0]) return;  // not initialized/mounted
+void dataloggingExecute(const GnssData& gnssData, const SensingData& sensingData) {
+    if (!CSV_FILE[0]) {
+        Serial.println("CSV_FILE not set, skipping datalogging");
+        return;
+    }
 
     FsFile log = sd.open(CSV_FILE, O_WRITE | O_CREAT | O_APPEND);
     if (!log) return;
@@ -135,8 +131,25 @@ void dataloggingExecute() {
 
 void dataloggingTask(void* pvParameters) {
     Serial.println("Datalogging task started");
+
+    // TODO: If this is ever used. Initialize them with xQueueCreate
+    QueueHandle_t gnssQueue = nullptr;
+    QueueHandle_t sensingQueue = nullptr;
+
     while (true) {
-        dataloggingExecute();
+        GnssData gnssData = {0};
+        SensingData sensingData = {0};
+
+        if (gnssQueue) {
+            xQueueReceive(gnssQueue, &gnssData, 0);
+        }
+        if (sensingQueue) {
+            xQueueReceive(sensingQueue, &sensingData, 0);
+        }
+
+        dataloggingExecute(gnssData, sensingData);
+
+
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
