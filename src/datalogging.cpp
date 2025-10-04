@@ -6,7 +6,7 @@
 #include <SdFat.h>
 #include <TinyGPS++.h>
 
-#include "types.h"
+
 
 #define SD_CS_PIN 2
 #define INIT_MHZ 1
@@ -43,7 +43,7 @@ static bool appendCsvHeaderIfNew(const char* path) {
     if (!sd.exists(path)) {
         FsFile f = sd.open(path, O_WRITE | O_CREAT | O_TRUNC);
         if (!f) return false;
-        f.println("UptimeMillis,Time,Latitude,Longitude,Altitude,Humidity,Temperature,Pressure");
+        f.println("UptimeMillis,Time,Latitude,Longitude,GPSAltitude,BaroAltitude,Pressure,Temperature,Humidity");
         f.close();
     }
     return true;
@@ -120,13 +120,13 @@ void dataloggingExecute(const GnssData& gnssData, const SensingData& sensingData
     log.print(',');
     log.print(gnssData.altitude, 2);
     log.print(',');
-    log.print(sensingData.humidity, 2);
-    log.print(',');
-    log.print(sensingData.temperature, 2);
+    log.print(sensingData.baroAltitude, 2);
     log.print(',');
     log.print(sensingData.pressure, 2);
     log.print(',');
-    log.print(sensingData.baroAltitude, 2);
+    log.print(sensingData.temperature, 2);
+    log.print(',');
+    log.print(sensingData.humidity, 2);
     log.println();
     log.close();
 }

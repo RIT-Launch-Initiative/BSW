@@ -1,6 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
+#include "types.h"
 
 struct Settings {
     float log_altitude_threshold;
