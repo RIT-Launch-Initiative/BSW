@@ -31,10 +31,13 @@ static void hdc2080Init() {
 
 void sensingInit() {
     Wire.begin();
+    Serial.println("=============");
+    Serial.println("   Sensors   ");
+    Serial.println("=============");
     ms5607.begin();
+    Serial.println("\tMS5607 initialized");
     hdc2080Init();
-
-    Serial.println("Sensors initialized");
+    Serial.println("\tHDC2080 initialized");
 }
 
 void sensingExecute(SensingData& data) {

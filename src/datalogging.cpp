@@ -50,9 +50,10 @@ static bool appendCsvHeaderIfNew(const char* path) {
 }
 
 void dataloggingInit() {
+    Serial.println("=============");
+    Serial.println(" Datalogging ");
+    Serial.println("=============");
 
-
-    Serial.println("Initializing SD");
     pinMode(MISO, INPUT_PULLUP);
     pinMode(SD_CS_PIN, OUTPUT);
     digitalWrite(SD_CS_PIN, HIGH);
@@ -60,28 +61,40 @@ void dataloggingInit() {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
     for (int i = 0; i < 10; ++i) SPI.transfer(0xFF);
     SPI.endTransaction();
+    Serial.println("SPI initialized");
 
     SdSpiConfig cfg(SD_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(INIT_MHZ));
 
-    Serial.println("Initalizing SD Card");
     if (!sd.cardBegin(cfg)) {
-        Serial.print("cardBegin failed  sdErr=0x");
+        Serial.print("\tcardBegin failed  sdErr=0x");
         Serial.print(sd.sdErrorCode(), HEX);
         Serial.print(" sdData=0x");
         Serial.println(sd.sdErrorData(), HEX);
         return;
     }
-    Serial.println("cardBegin succeeded");
+    Serial.println("\tCard initialized");
 
-    Serial.println("Mounting FS");
+    uint64_t cardSize = sd.card()->cardSize();
+    Serial.print("\tCard size: ");
+    if (cardSize == 0) {
+        Serial.println("Unknown");
+    }
+    else if (cardSize < 2 * 1024 * 1024) {
+        Serial.print(cardSize / 1024);
+        Serial.println(" MB");
+    } else {
+        Serial.print(cardSize / (1024 * 1024));
+        Serial.println(" GB");
+    }
+
     if (!sd.begin(cfg)) {
-        Serial.print("FS mount failed sdErr=0x");
+        Serial.print("\tFS mount failed sdErr=0x");
         Serial.print(sd.sdErrorCode(), HEX);
         Serial.print(" sdData=0x");
         Serial.println(sd.sdErrorData(), HEX);
         return;
     }
-    Serial.println("FS mounted");
+    Serial.println("\tFS mounted");
 
     // Bootcount
     bootcount = readUintFromFile(BOOTCOUNT_FILE, 0) + 1;
@@ -94,10 +107,9 @@ void dataloggingInit() {
     appendCsvHeaderIfNew(indexedLogFile);
     strncpy(CSV_FILE, indexedLogFile, FILE_NAME_SIZE);
 
-    Serial.println("Datalogging initialized");
-    Serial.print("Boot count: ");
+    Serial.print("\tBoot count: ");
     Serial.println(bootcount);
-    Serial.print("Log file: ");
+    Serial.print("\tLog file: ");
     Serial.println(CSV_FILE);
 }
 
