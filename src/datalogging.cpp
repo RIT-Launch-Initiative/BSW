@@ -75,15 +75,16 @@ void dataloggingInit() {
     Serial.println("\tCard initialized");
 
     uint64_t cardSize = sd.card()->cardSize();
+    uint64_t cardSizeBytes = cardSize * 512;
     Serial.print("\tCard size: ");
-    if (cardSize == 0) {
-        Serial.println("Unknown");
-    }
-    else if (cardSize < 2 * 1024 * 1024) {
-        Serial.print(cardSize / 1024);
+    if (cardSizeBytes < (2ULL * 1024 * 1024)) {
+        Serial.print(cardSizeBytes / 1024);
+        Serial.println(" KB");
+    } else if (cardSizeBytes < (2ULL * 1024 * 1024 * 1024)) {
+        Serial.print(cardSizeBytes / (1024 * 1024));
         Serial.println(" MB");
     } else {
-        Serial.print(cardSize / (1024 * 1024));
+        Serial.print(cardSizeBytes / (1024 * 1024 * 1024));
         Serial.println(" GB");
     }
 
