@@ -36,6 +36,10 @@ void setup() {
     sensingInit();
     dataloggingInit();
     gnssInit();
+
+    if (DEBUG) {
+        Serial.println("Debug logs active");
+    }
 }
 
 void loop() {
