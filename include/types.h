@@ -12,4 +12,5 @@ struct SensingData {
     float temperature;
     float pressure;
     float baroAltitude;
+    float hdcTemperature;
 };

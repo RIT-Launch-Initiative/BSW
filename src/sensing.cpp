@@ -13,53 +13,49 @@
 MS56XX ms5607(MS56XX_ADDR_LOW, MS5607);
 HDC2080 hdc2080(HDC2080_ADDR);
 
-extern QueueHandle_t sensingQueue;
+uint8_t HDC2080_OFFSET_LSB = 90; // offset / 0.16 = 14 / 0.16 = 90
+
+static void hdc2080Init() {
+
+    hdc2080.begin();
+    hdc2080.reset();
+
+    hdc2080.setRate(ONE_HZ);
+    hdc2080.setMeasurementMode(TEMP_AND_HUMID);
+    hdc2080.setTempRes(FOURTEEN_BIT);
+    hdc2080.setHumidRes(FOURTEEN_BIT);
+
+    // This will have measurements trigger periodically
+    hdc2080.triggerMeasurement();
+}
 
 void sensingInit() {
     Wire.begin();
     ms5607.begin();
-    hdc2080.begin();
+    hdc2080Init();
 
     Serial.println("Sensors initialized");
 }
 
-void sensingExecute() {
+void sensingExecute(SensingData& data) {
     ms5607.doBaro(true);
-    float ms5607Pressure = ms5607.pressure;
-    float ms5607Temperature = ms5607.temperature;
-    float ms5607Altitude = ms5607.altitude;
-    float hdcTemp = hdc2080.readTemp();
-    float hdcHum = hdc2080.readHumidity();
+    // HDC2080 doesn't need a call if setup properly
 
-    SensingData data;
-    data.humidity = hdcHum;
-    data.temperature = hdcTemp;
-    data.pressure = ms5607Pressure;
-    data.baroAltitude = ms5607Altitude;
-    xQueueOverwrite(sensingQueue, &data);
+    data.humidity = hdc2080.readHumidity();
+    data.hdcTemperature = hdc2080.readTemp();
 
-    Serial.print("MS5607 Altitude: ");
-    Serial.print(ms5607Altitude);
-    Serial.print(" m, ");
-    Serial.print("Pressure: ");
-    Serial.print(ms5607Pressure);
-    Serial.print(" mbar, ");
-    Serial.print("Temp: ");
-    Serial.print(ms5607Temperature);
-    Serial.println(" C");
+    data.pressure = ms5607.pressure;
+    data.temperature = ms5607.temperature;
+    data.baroAltitude = ms5607.altitude;
 
-    Serial.print("HDC2080 Temp: ");
-    Serial.print(hdcTemp);
-    Serial.print(" C, ");
-    Serial.print("Humidity: ");
-    Serial.print(hdcHum);
-    Serial.println(" %");
 }
 
 void sensingTask(void* pvParameters) {
     Serial.println("Sensing task started");
+
+    SensingData data;
     while (true) {
-        sensingExecute();
+        sensingExecute(data);
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
