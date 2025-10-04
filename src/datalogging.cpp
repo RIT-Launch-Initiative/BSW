@@ -110,6 +110,8 @@ void dataloggingExecute(const GnssData& gnssData, const SensingData& sensingData
     FsFile log = sd.open(CSV_FILE, O_WRITE | O_CREAT | O_APPEND);
     if (!log) return;
 
+    log.print(millis());
+    log.print(',');
     log.print(gnssData.time);
     log.print(',');
     log.print(gnssData.latitude, 6);
