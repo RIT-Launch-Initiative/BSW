@@ -4,9 +4,6 @@
 #include <FreeRTOS_SAMD21.h>
 #include <SPI.h>
 #include <SdFat.h>
-#include <TinyGPS++.h>
-
-
 
 #define SD_CS_PIN 2
 #define INIT_MHZ 1
@@ -18,8 +15,12 @@ uint32_t bootcount = 0;
 static const char* BOOTCOUNT_FILE = "/.bootcount";
 static char CSV_FILE[FILE_NAME_SIZE] = "";
 
-
 SdFs sd;
+
+// TODO: If this is ever used. Initialize them with xQueueCreate
+QueueHandle_t gnssQueue = nullptr;
+QueueHandle_t sensingQueue = nullptr;
+
 
 static uint32_t readUintFromFile(const char* path, uint32_t fallback = 0) {
     FsFile f = sd.open(path, O_READ);
@@ -105,8 +106,13 @@ void dataloggingInit() {
     char indexedLogFile[FILE_NAME_SIZE] = {0};
     snprintf(indexedLogFile, FILE_NAME_SIZE, "log_%lu.csv",
              (unsigned long)bootcount);
-    appendCsvHeaderIfNew(indexedLogFile);
+    if (!appendCsvHeaderIfNew(indexedLogFile)) {
+        Serial.println(
+            "\tERROR: Failed to create log file or write CSV header.");
+        return;
+    }
     strncpy(CSV_FILE, indexedLogFile, FILE_NAME_SIZE);
+    CSV_FILE[FILE_NAME_SIZE - 1] = '\0';
 
     Serial.print("\tBoot count: ");
     Serial.println(bootcount);
@@ -121,7 +127,16 @@ void dataloggingExecute(const GnssData& gnssData, const SensingData& sensingData
     }
 
     FsFile log = sd.open(CSV_FILE, O_WRITE | O_CREAT | O_APPEND);
-    if (!log) return;
+    if (!log) {
+        Serial.print("Failed to open CSV file: ");
+        Serial.print(CSV_FILE);
+        Serial.print(" (sdErrorCode: ");
+        Serial.print(sd.sdErrorCode());
+        Serial.print(", sdErrorData: ");
+        Serial.print(sd.sdErrorData());
+        Serial.println(")");
+        return;
+    }
 
     log.print(millis());
     log.print(',');
@@ -147,9 +162,6 @@ void dataloggingExecute(const GnssData& gnssData, const SensingData& sensingData
 void dataloggingTask(void* pvParameters) {
     Serial.println("Datalogging task started");
 
-    // TODO: If this is ever used. Initialize them with xQueueCreate
-    QueueHandle_t gnssQueue = nullptr;
-    QueueHandle_t sensingQueue = nullptr;
 
     while (true) {
         GnssData gnssData = {0};
