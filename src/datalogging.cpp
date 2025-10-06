@@ -21,7 +21,6 @@ SdFs sd;
 QueueHandle_t gnssQueue = nullptr;
 QueueHandle_t sensingQueue = nullptr;
 
-
 static uint32_t readUintFromFile(const char* path, uint32_t fallback = 0) {
     FsFile f = sd.open(path, O_READ);
     if (!f) return fallback;
@@ -44,10 +43,26 @@ static bool appendCsvHeaderIfNew(const char* path) {
     if (!sd.exists(path)) {
         FsFile f = sd.open(path, O_WRITE | O_CREAT | O_TRUNC);
         if (!f) return false;
-        f.println("UptimeMillis,Time,Latitude,Longitude,GPSAltitude,BaroAltitude,Pressure,Temperature,Humidity");
+        f.println(
+            "UptimeMillis,Time,Latitude,Longitude,GPSAltitude,BaroAltitude,"
+            "Pressure,Temperature,Humidity");
         f.close();
     }
     return true;
+}
+
+static void printCardSize(uint64_t cardSizeBytes) {
+    Serial.print("\tCard size: ");
+    if (cardSizeBytes < (2ULL * 1024 * 1024)) {
+        Serial.print(cardSizeBytes / 1024);
+        Serial.println(" KB");
+    } else if (cardSizeBytes < (2ULL * 1024 * 1024 * 1024)) {
+        Serial.print(cardSizeBytes / (1024 * 1024));
+        Serial.println(" MB");
+    } else {
+        Serial.print(cardSizeBytes / (1024 * 1024 * 1024));
+        Serial.println(" GB");
+    }
 }
 
 void dataloggingInit() {
@@ -76,18 +91,7 @@ void dataloggingInit() {
     Serial.println("\tCard initialized");
 
     uint64_t cardSize = sd.card()->cardSize();
-    uint64_t cardSizeBytes = cardSize * 512;
-    Serial.print("\tCard size: ");
-    if (cardSizeBytes < (2ULL * 1024 * 1024)) {
-        Serial.print(cardSizeBytes / 1024);
-        Serial.println(" KB");
-    } else if (cardSizeBytes < (2ULL * 1024 * 1024 * 1024)) {
-        Serial.print(cardSizeBytes / (1024 * 1024));
-        Serial.println(" MB");
-    } else {
-        Serial.print(cardSizeBytes / (1024 * 1024 * 1024));
-        Serial.println(" GB");
-    }
+    printCardSize(cardSize * 512ULL);
 
     if (!sd.begin(cfg)) {
         Serial.print("\tFS mount failed sdErr=0x");
@@ -120,7 +124,8 @@ void dataloggingInit() {
     Serial.println(CSV_FILE);
 }
 
-void dataloggingExecute(const GnssData& gnssData, const SensingData& sensingData) {
+void dataloggingExecute(const GnssData& gnssData,
+                        const SensingData& sensingData) {
     if (!CSV_FILE[0]) {
         Serial.println("CSV_FILE not set, skipping datalogging");
         return;
@@ -162,7 +167,6 @@ void dataloggingExecute(const GnssData& gnssData, const SensingData& sensingData
 void dataloggingTask(void* pvParameters) {
     Serial.println("Datalogging task started");
 
-
     while (true) {
         GnssData gnssData = {0};
         SensingData sensingData = {0};
@@ -175,7 +179,6 @@ void dataloggingTask(void* pvParameters) {
         }
 
         dataloggingExecute(gnssData, sensingData);
-
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
