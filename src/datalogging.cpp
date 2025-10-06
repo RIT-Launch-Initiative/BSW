@@ -95,8 +95,8 @@ void dataloggingInit() {
     uint64_t cardSizeInSectors = sd.card()->sectorCount();
     printCardSize(cardSizeInSectors);
 
-    // Will re-initialize the SD card, then mount the filesystem
-    if (!sd.begin(cfg)) {
+    // Mount the filesystem
+    if (!sd.volumeBegin()) {
         Serial.print("\tFS mount failed sdErr=0x");
         Serial.print(sd.sdErrorCode(), HEX);
         Serial.print(" sdData=0x");
