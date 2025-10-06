@@ -82,6 +82,7 @@ void dataloggingInit() {
 
     SdSpiConfig cfg(SD_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(INIT_MHZ));
 
+    // Just check if we can access an SD card first, don't mount FS yet
     if (!sd.cardBegin(cfg)) {
         Serial.print("\tcardBegin failed  sdErr=0x");
         Serial.print(sd.sdErrorCode(), HEX);
@@ -94,6 +95,7 @@ void dataloggingInit() {
     uint64_t cardSizeInSectors = sd.card()->sectorCount();
     printCardSize(cardSizeInSectors);
 
+    // Will re-initialize the SD card, then mount the filesystem
     if (!sd.begin(cfg)) {
         Serial.print("\tFS mount failed sdErr=0x");
         Serial.print(sd.sdErrorCode(), HEX);
