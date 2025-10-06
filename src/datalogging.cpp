@@ -51,7 +51,8 @@ static bool appendCsvHeaderIfNew(const char* path) {
     return true;
 }
 
-static void printCardSize(uint64_t cardSizeBytes) {
+static void printCardSize(const uint64_t cardSizeBytes) {
+    uint64_t cardSizeInBytes = cardSizeBytes * 512ULL; // SD cards use 512-byte sectors
     Serial.print("\tCard size: ");
     if (cardSizeBytes < (2ULL * 1024 * 1024)) {
         Serial.print(cardSizeBytes / 1024);
@@ -90,8 +91,8 @@ void dataloggingInit() {
     }
     Serial.println("\tCard initialized");
 
-    uint64_t cardSize = sd.card()->cardSize();
-    printCardSize(cardSize * 512ULL);
+    uint64_t cardSizeInSectors = sd.card()->sectorCount();
+    printCardSize(cardSizeInSectors);
 
     if (!sd.begin(cfg)) {
         Serial.print("\tFS mount failed sdErr=0x");
