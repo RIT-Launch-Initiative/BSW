@@ -68,7 +68,24 @@ static void handleTelemetryGet() {
 }
 
 static void handleDatalogging() {
+    bool aboveThreshold = (gnssData.altitude > settings.logAltitudeThresholdMeters + settings.gpsAltitudeTolerance) &&
+                          (sensorData.baroAltitude > settings.logAltitudeThresholdMeters + settings.baroAltitudeTolerance);
+    static bool loggerOpen = false;
 
+    if (aboveThreshold) {
+        if (DEBUG && !loggerOpen) {
+            Serial.println("Above altitude threshold, logging data");
+        }
+
+        loggerOpen = true;
+        dataloggingExecute(gnssData, sensorData);
+    } else if (loggerOpen) {
+        if (DEBUG && loggerOpen) {
+            Serial.println("Below altitude threshold, stopping datalogging");
+        }
+
+        loggerOpen = false;
+    }
 }
 
 
