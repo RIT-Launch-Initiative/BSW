@@ -11,10 +11,9 @@
 static constexpr size_t MAX_GEOFENCES = 32;
 static Geofence geofences[MAX_GEOFENCES]{0};
 static size_t geofenceCount = 0;
-
 static const uint32_t GPSBaud = 9600;
-extern FatFileSystem fatfs;
 
+extern SdFs sd;
 TinyGPSPlus gps;
 
 static bool isWithinGeofence() {
@@ -32,12 +31,7 @@ static bool isWithinGeofence() {
 }
 
 void loadGeofences() {
-    if (!fatfs.begin(&flash)) {
-        geofenceCount = 0;
-        return;
-    }
-
-    File file = fatfs.open("/geofences", FILE_READ);
+    FsFile file = sd.open("/geofences", FILE_READ);
     if (!file) {
         geofenceCount = 0;
         return;
