@@ -32,15 +32,6 @@ bool writeUintToFile(const char* path, uint32_t v) {
     return true;
 }
 
-bool appendCsvHeaderIfNew(const char* path) {
-    if (!sd.exists(path)) {
-        FsFile f = sd.open(path, O_WRITE | O_CREAT | O_TRUNC);
-        if (!f) return false;
-        f.println("UptimeMillis,Time,Latitude,Longitude,GPSAltitude,BaroAltitude,Pressure,Temperature,Humidity");
-        f.close();
-    }
-    return true;
-}
 
 void filesystemInit() {
     Serial.println("=============");

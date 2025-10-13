@@ -10,6 +10,20 @@ static const char* BOOTCOUNT_FILE = "/.bootcount";
 
 extern SdFs sd;
 
+static bool appendCsvHeaderIfNew(const char* path) {
+    if (!sd.exists(path)) {
+        FsFile f = sd.open(path, O_WRITE | O_CREAT | O_TRUNC);
+        if (!f) return false;
+        f.println(
+            "UptimeMillis,Time,Latitude,Longitude,GPSAltitude,BaroAltitude,"
+            "Pressure,Temperature,Humidity");
+        f.close();
+
+        return true;
+    }
+
+    return false;
+}
 
 void dataloggingInit() {
     Serial.println("=============");
