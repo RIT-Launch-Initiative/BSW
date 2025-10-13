@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <FreeRTOS_SAMD21.h>
 #include "filesystem.h"
+#include "datalogging.h"
 #include "gnss.h"
 #include "sensing.h"
 #include "types.h"
@@ -32,6 +33,8 @@ static void printSensingData() {
 void setup() {
     Serial.begin(115200);
     delay(3000);
+
+    filesystemInit();
 
     sensingInit();
     dataloggingInit();

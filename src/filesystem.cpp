@@ -14,7 +14,7 @@
 
 SdFs sd;
 
-uint32_t readUintFromFile(const char* path, uint32_t fallback = 0) {
+uint32_t readUintFromFile(const char* path, uint32_t fallback) {
     FsFile f = sd.open(path, O_READ);
     if (!f) return fallback;
     char buf[32] = {0};

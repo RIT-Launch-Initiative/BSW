@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 
-static inline constexpr size_t FILE_NAME_SIZE = 32;
+static constexpr size_t FILE_NAME_SIZE = 32;
 
 void filesystemInit();
 
