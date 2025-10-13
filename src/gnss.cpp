@@ -45,7 +45,17 @@ void loadGeofences() {
 }
 
 void gnssInit() {
-    Serial1.begin(GPSBaud); 
+    Serial.println("=============");
+    Serial.println("    GNSS    ");
+    Serial.println("=============");
+
+    loadGeofences();
+    Serial.print("\tLoaded ");
+    Serial.print(geofenceCount);
+    Serial.println(" geofences");
+    
+
+    Serial1.begin(GPSBaud);
     Serial.println("GNSS initialized");
 }
 

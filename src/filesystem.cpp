@@ -50,7 +50,7 @@ void filesystemInit() {
     SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
     for (int i = 0; i < 10; ++i) SPI.transfer(0xFF);
     SPI.endTransaction();
-    Serial.println("SPI initialized");
+    Serial.println("\tSPI initialized");
 
     SdSpiConfig cfg(SD_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(INIT_MHZ));
 

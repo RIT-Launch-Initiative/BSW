@@ -18,3 +18,9 @@ struct SensingData {
     float baroAltitude;
     float hdcTemperature;
 };
+
+struct Geofence {
+    float latitude;
+    float longitude;
+    float radiusMeters;
+};
