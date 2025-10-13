@@ -1,7 +1,9 @@
 #pragma once
 
 struct Settings {
-    float log_altitude_threshold;
+    float logAltitudeThresholdMeters;
+    float baroAltitudeTolerance;
+    float gpsAltitudeTolerance;
 };
 
 struct GnssData {
