@@ -47,8 +47,9 @@ void setup() {
 
 void loop() {
     sensingExecute(sensorData);
-    // TODO: gnssExecute(gnssData);
+    gnssExecute(gnssData);
     dataloggingExecute(gnssData, sensorData);
+    
 
     if (DEBUG) {
         printSensingData();

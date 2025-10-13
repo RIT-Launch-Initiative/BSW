@@ -13,11 +13,9 @@ static Geofence geofences[MAX_GEOFENCES]{0};
 static size_t geofenceCount = 0;
 
 static const uint32_t GPSBaud = 9600;
-extern Adafruit_SPIFlash flash;
 extern FatFileSystem fatfs;
 
-extern QueueHandle_t gnssQueue;
-extern TinyGPSPlus gps;
+TinyGPSPlus gps;
 
 static bool isWithinGeofence() {
     if (!gps.location.isValid()) return false;
@@ -58,12 +56,11 @@ void gnssInit() {
     Serial.println("GNSS initialized");
 }
 
-void gnssExecute() {
+void gnssExecute(GnssData& data) {
     while (Serial1.available()) {
         gps.encode(Serial1.read());
     }
 
-    GnssData data = {};
     if (gps.time.isValid()) {
         snprintf(data.time, sizeof(data.time), "%02d:%02d:%02d",
                  gps.time.hour(), gps.time.minute(), gps.time.second());
@@ -73,18 +70,10 @@ void gnssExecute() {
     data.latitude  = gps.location.isValid() ? gps.location.lat()    : 0.0;
     data.longitude = gps.location.isValid() ? gps.location.lng()    : 0.0;
     data.altitude  = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
-    xQueueOverwrite(gnssQueue, &data);
 
     char line[128] = {0};
     snprintf(line, sizeof(line), "GPS: %.6f,%.6f,%.1fm %s", 
              data.latitude, data.longitude, data.altitude,
              (data.time[0] != '\0') ? data.time : "no_time");
     Serial.println(line);
-}
-
-void gnssTask(void *pvParameters) {
-    while (true) {
-        gnssExecute();
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
 }

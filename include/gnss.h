@@ -7,5 +7,4 @@ struct Geofence {
 };
 
 void gnssInit();
-void gnssExecute();
-void gnssTask(void* pvParameters);
+void gnssExecute(GnssData& data);
