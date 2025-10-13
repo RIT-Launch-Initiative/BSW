@@ -62,7 +62,12 @@ void loop() {
     gnssExecute(gnssData);
     dataloggingExecute(gnssData, sensorData);
     int withinGeofenceIndex = isWithinGeofence(gnssData.latitude, gnssData.longitude);
-    
+
+    if (withinGeofenceIndex >= 0) {
+        static bool ledState = false;
+        digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
+        ledState = !ledState;
+    }
 
     if (DEBUG) {
         printSensingData();
