@@ -4,9 +4,8 @@
 
 #include <Adafruit_SPIFlash.h>
 #include <Arduino.h>
-#include <FreeRTOS_SAMD21.h>
 #include <TinyGPS++.h>
-#include <cstdio> // snprintf
+#include <cstdio>
 
 static constexpr size_t MAX_GEOFENCES = 32;
 static Geofence geofences[MAX_GEOFENCES]{0};
@@ -61,6 +60,18 @@ void gnssExecute(GnssData& data) {
     } else {
         data.time[0] = '\0';
     }
+    if (gps.location.isValid()) {
+        Serial.print("Lat: ");
+        Serial.print(gps.location.lat(), 6);
+        Serial.print(" Lon: ");
+        Serial.print(gps.location.lng(), 6);
+        Serial.print(" Alt: ");
+        Serial.print(gps.altitude.meters(), 2);
+        Serial.println();
+    } else {
+        Serial.println("No valid location.");
+    }
+
     data.latitude  = gps.location.isValid() ? gps.location.lat()    : 0.0;
     data.longitude = gps.location.isValid() ? gps.location.lng()    : 0.0;
     data.altitude  = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
