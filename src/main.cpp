@@ -12,6 +12,7 @@ bool DEBUG = true;
 
 static SensingData sensorData{0};
 static GnssData gnssData{0};
+static Settings settings{0};
 
 static void printSensingData() {
     Serial.print("MS5607 Altitude: ");
@@ -61,10 +62,17 @@ void setup() {
     }
 }
 
-void loop() {
+static void handleTelemetryGet() {
     sensingExecute(sensorData);
     gnssExecute(gnssData);
-    dataloggingExecute(gnssData, sensorData);
+}
+
+static void handleDatalogging() {
+
+}
+
+
+static void handleGeofencing() {
     int withinGeofenceIndex = isWithinGeofence(gnssData.latitude, gnssData.longitude);
 
     if (withinGeofenceIndex >= 0) {
@@ -72,14 +80,22 @@ void loop() {
         digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
         ledState = !ledState;
     }
+    
+    if (DEBUG && (withinGeofenceIndex >= 0)) {
+        Serial.print("Within geofence index: ");
+        Serial.println(withinGeofenceIndex);
+    }
+}
+
+void loop() {
+    handleTelemetryGet();
+    handleDatalogging();
+    handleGeofencing();
+
 
     if (DEBUG) {
         printSensingData();
         printGnssData();
-        if (withinGeofenceIndex >= 0) {
-            Serial.print("Within geofence index: ");
-            Serial.println(withinGeofenceIndex);
-        }
     }
     delay(1000);
 }
