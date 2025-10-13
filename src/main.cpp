@@ -61,11 +61,16 @@ void loop() {
     sensingExecute(sensorData);
     gnssExecute(gnssData);
     dataloggingExecute(gnssData, sensorData);
+    int withinGeofenceIndex = isWithinGeofence(gnssData.latitude, gnssData.longitude);
     
 
     if (DEBUG) {
         printSensingData();
         printGnssData();
+        if (withinGeofenceIndex >= 0) {
+            Serial.print("Within geofence index: ");
+            Serial.println(withinGeofenceIndex);
+        }
     }
     delay(1000);
 }

@@ -15,18 +15,16 @@ static const uint32_t GPSBaud = 9600;
 extern SdFs sd;
 TinyGPSPlus gps;
 
-static bool isWithinGeofence() {
+int isWithinGeofence(double latitude, double longitude) {
     if (!gps.location.isValid()) return false;
-    double lat = gps.location.lat();
-    double lon = gps.location.lng();
     for (size_t i = 0; i < geofenceCount; ++i) {
         double dist = TinyGPSPlus::distanceBetween(
-            lat, lon, geofences[i].latitude, geofences[i].longitude);
+            latitude, longitude, geofences[i].latitude, geofences[i].longitude);
         if (dist <= geofences[i].radiusMeters) {
-            return true;
+            return i;
         }
     }
-    return false;
+    return -1;
 }
 
 void loadGeofences() {
