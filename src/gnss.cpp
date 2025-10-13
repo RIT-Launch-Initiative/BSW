@@ -53,7 +53,18 @@ void gnssInit() {
     Serial.print("\tLoaded ");
     Serial.print(geofenceCount);
     Serial.println(" geofences");
-    
+    for (size_t i = 0; i < geofenceCount; ++i) {
+        Serial.print("\tGeofence ");
+        Serial.print(i);
+        Serial.print(": Lat ");
+        Serial.print(geofences[i].latitude, 6);
+        Serial.print(", Lon ");
+        Serial.print(geofences[i].longitude, 6);
+        Serial.print(", Radius ");
+        Serial.print(geofences[i].radiusMeters);
+        Serial.println(" m");
+    }
+
 
     Serial1.begin(GPSBaud);
     Serial.println("GNSS initialized");
