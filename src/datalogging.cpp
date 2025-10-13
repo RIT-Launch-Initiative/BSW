@@ -6,7 +6,6 @@
 
 
 static char CSV_FILE[FILE_NAME_SIZE] = "";
-static const char* BOOTCOUNT_FILE = "/.bootcount";
 
 extern SdFs sd;
 
@@ -30,9 +29,7 @@ void dataloggingInit() {
     Serial.println(" Datalogging ");
     Serial.println("=============");
 
-    // Bootcount
-    uint32_t bootcount = readUintFromFile(BOOTCOUNT_FILE, 0) + 1;
-    writeUintToFile(BOOTCOUNT_FILE, bootcount);
+
 
     // Log file name
     char indexedLogFile[FILE_NAME_SIZE] = {0};

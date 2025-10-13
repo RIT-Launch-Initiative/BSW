@@ -11,7 +11,8 @@
 #define SD_CS_PIN 2
 #define INIT_MHZ 1
 
-
+static const char* BOOTCOUNT_FILE = "/.bootcount";
+static uint32_t bootcount = 0;
 SdFs sd;
 
 uint32_t readUintFromFile(const char* path, uint32_t fallback) {
@@ -30,6 +31,10 @@ bool writeUintToFile(const char* path, uint32_t v) {
     f.println(v);
     f.close();
     return true;
+}
+
+uint32_t getBootcount() {
+    return bootcount;
 }
 
 
@@ -81,4 +86,7 @@ void filesystemInit() {
     }
     Serial.println("\tFS mounted");
 
+    // Bootcount
+    bootcount = readUintFromFile(BOOTCOUNT_FILE, 0) + 1;
+    writeUintToFile(BOOTCOUNT_FILE, bootcount);
 }
