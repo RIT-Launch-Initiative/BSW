@@ -29,12 +29,11 @@ void dataloggingInit() {
     Serial.println(" Datalogging ");
     Serial.println("=============");
 
-
+    uint32_t bootcount = getBootcount();
 
     // Log file name
     char indexedLogFile[FILE_NAME_SIZE] = {0};
-    snprintf(indexedLogFile, FILE_NAME_SIZE, "log_%lu.csv",
-             (unsigned long)bootcount);
+    snprintf(indexedLogFile, FILE_NAME_SIZE, "log_%lu.csv", bootcount);
     appendCsvHeaderIfNew(indexedLogFile);
     strncpy(CSV_FILE, indexedLogFile, FILE_NAME_SIZE);
 
