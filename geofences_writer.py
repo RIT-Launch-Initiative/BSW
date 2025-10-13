@@ -78,6 +78,8 @@ def main():
             geofences.append(geofence)
     except (EOFError, KeyboardInterrupt):
         print("\nInput finished.")
+        for i, (lat, lon, rad) in enumerate(geofences):
+            print(f"  Geofence {i+1}: Lat {lat}, Lon {lon}, Radius {rad} m")
 
     if geofences:
         write_geofences(sd_path, geofences)
