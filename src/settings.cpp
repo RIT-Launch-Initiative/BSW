@@ -12,7 +12,7 @@ enum SettingsConstants {
     LOG_ALTITUDE_THRESHOLD_DEFAULT = 100, // meters
     BARO_ALTITUDE_TOLERANCE_DEFAULT = 5,  // meters
     GPS_ALTITUDE_TOLERANCE_DEFAULT = 5,   // meters
-}
+};
 
 static void loadDefaultSettings(Settings& settings) {
     settings.logAltitudeThresholdMeters = LOG_ALTITUDE_THRESHOLD_DEFAULT;

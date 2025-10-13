@@ -1,9 +1,11 @@
 #include <Arduino.h>
 #include <FreeRTOS_SAMD21.h>
-#include "filesystem.h"
+
 #include "datalogging.h"
+#include "filesystem.h"
 #include "gnss.h"
 #include "sensing.h"
+#include "settings.h"
 #include "types.h"
 
 bool DEBUG = true;
@@ -51,6 +53,8 @@ void setup() {
     sensingInit();
     dataloggingInit();
     gnssInit();
+
+    loadSettings(settings);
 
     if (DEBUG) {
         Serial.println("Debug logs active");
