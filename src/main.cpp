@@ -30,6 +30,18 @@ static void printSensingData() {
     Serial.println(" %");
 }
 
+static void printGnssData() {
+    Serial.print("GNSS Time: ");
+    Serial.print(gnssData.time);
+    Serial.print(", Lat: ");
+    Serial.print(gnssData.latitude, 6);
+    Serial.print(", Lon: ");
+    Serial.print(gnssData.longitude, 6);
+    Serial.print(", Alt: ");
+    Serial.print(gnssData.altitude);
+    Serial.println(" m");
+}
+
 void setup() {
     Serial.begin(115200);
     delay(3000);
@@ -53,6 +65,7 @@ void loop() {
 
     if (DEBUG) {
         printSensingData();
+        printGnssData();
     }
     delay(1000);
 }

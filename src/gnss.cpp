@@ -60,25 +60,10 @@ void gnssExecute(GnssData& data) {
     } else {
         data.time[0] = '\0';
     }
-    if (gps.location.isValid()) {
-        Serial.print("Lat: ");
-        Serial.print(gps.location.lat(), 6);
-        Serial.print(" Lon: ");
-        Serial.print(gps.location.lng(), 6);
-        Serial.print(" Alt: ");
-        Serial.print(gps.altitude.meters(), 2);
-        Serial.println();
-    } else {
-        Serial.println("No valid location.");
-    }
 
     data.latitude  = gps.location.isValid() ? gps.location.lat()    : 0.0;
     data.longitude = gps.location.isValid() ? gps.location.lng()    : 0.0;
     data.altitude  = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
-
-    char line[128] = {0};
-    snprintf(line, sizeof(line), "GPS: %.6f,%.6f,%.1fm %s", 
-             data.latitude, data.longitude, data.altitude,
-             (data.time[0] != '\0') ? data.time : "no_time");
-    Serial.println(line);
+    snprintf(data.time, sizeof(data.time), "%02d:%02d:%02d",
+             gps.time.hour(), gps.time.minute(), gps.time.second());
 }
