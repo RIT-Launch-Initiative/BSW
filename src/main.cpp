@@ -85,6 +85,7 @@ static void handleDatalogging() {
         }
 
         loggerOpen = false;
+        closeDatalogger();
     }
 }
 

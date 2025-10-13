@@ -6,6 +6,7 @@
 
 
 static char CSV_FILE[FILE_NAME_SIZE] = "";
+static FsFile logFile;
 
 extern SdFs sd;
 
@@ -50,26 +51,35 @@ void dataloggingExecute(const GnssData& gnssData,
         return;
     }
 
-    FsFile log = sd.open(CSV_FILE, O_WRITE | O_CREAT | O_APPEND);
-    if (!log) return;
+    logFile = sd.open(CSV_FILE, O_WRITE | O_CREAT | O_APPEND);
+    if (!logFile) return;
 
-    log.print(millis());
-    log.print(',');
-    log.print(gnssData.time);
-    log.print(',');
-    log.print(gnssData.latitude, 6);
-    log.print(',');
-    log.print(gnssData.longitude, 6);
-    log.print(',');
-    log.print(gnssData.altitude, 2);
-    log.print(',');
-    log.print(sensingData.baroAltitude, 2);
-    log.print(',');
-    log.print(sensingData.pressure, 2);
-    log.print(',');
-    log.print(sensingData.temperature, 2);
-    log.print(',');
-    log.print(sensingData.humidity, 2);
-    log.println();
-    log.close();
+    logFile.print(millis());
+    logFile.print(',');
+    logFile.print(gnssData.time);
+    logFile.print(',');
+    logFile.print(gnssData.latitude, 6);
+    logFile.print(',');
+    logFile.print(gnssData.longitude, 6);
+    logFile.print(',');
+    logFile.print(gnssData.altitude, 2);
+    logFile.print(',');
+    logFile.print(sensingData.baroAltitude, 2);
+    logFile.print(',');
+    logFile.print(sensingData.pressure, 2);
+    logFile.print(',');
+    logFile.print(sensingData.temperature, 2);
+    logFile.print(',');
+    logFile.print(sensingData.humidity, 2);
+    logFile.println();
+    logFile.close();
+}
+
+void closeDatalogger() {
+    if (!CSV_FILE[0]) {
+        Serial.println("CSV_FILE not set, skipping datalogging close");
+        return;
+    }
+
+    logFile.close();
 }
