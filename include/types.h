@@ -1,5 +1,9 @@
 #pragma once
 
+struct Settings {
+    float log_altitude_threshold;
+};
+
 struct GnssData {
     char time[16];
     double latitude;
