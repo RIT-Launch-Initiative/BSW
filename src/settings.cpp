@@ -55,8 +55,8 @@ void loadSettings(Settings& settings) {
         Serial.println(error.c_str());
     } else {
         settings.logAltitudeThresholdMeters = doc["logAltitudeThresholdMeters"] | LOG_ALTITUDE_THRESHOLD_DEFAULT;
-        settings.baroAltitudeTolerance = doc["baroAltitudeTolerance"] | BARO_ALTITUDE_TOLERANCE_DEFAULT;
-        settings.gpsAltitudeTolerance = doc["gpsAltitudeTolerance"] | GPS_ALTITUDE_TOLERANCE_DEFAULT;
+        settings.baroAltitudeTolerance = doc["baroLogAltitudeTolerance"] | BARO_ALTITUDE_TOLERANCE_DEFAULT;
+        settings.gpsAltitudeTolerance = doc["gpsLogAltitudeTolerance"] | GPS_ALTITUDE_TOLERANCE_DEFAULT;
     }
 
     file.close();
