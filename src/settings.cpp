@@ -59,5 +59,15 @@ void loadSettings(Settings& settings) {
         settings.gpsAltitudeTolerance = doc["gpsLogAltitudeTolerance"] | GPS_ALTITUDE_TOLERANCE_DEFAULT;
     }
 
+    Serial.print("\tLog Altitude Threshold: ");
+    Serial.print(settings.logAltitudeThresholdMeters);
+    Serial.println(" m");
+    Serial.print("\tBaro Altitude Tolerance: ");
+    Serial.print(settings.baroAltitudeTolerance);
+    Serial.println(" m");
+    Serial.print("\tGPS Altitude Tolerance: ");
+    Serial.print(settings.gpsAltitudeTolerance);
+    Serial.println(" m");
+
     file.close();
 }
