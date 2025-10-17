@@ -7,24 +7,25 @@
 
 bool DEBUG = true;
 
-static SensingData data;
+static SensingData sensorData{0};
+static GnssData gnssData{0};
 
 static void printSensingData() {
     Serial.print("MS5607 Altitude: ");
-    Serial.print(data.baroAltitude);
+    Serial.print(sensorData.baroAltitude);
     Serial.print(" m, ");
     Serial.print("Pressure: ");
-    Serial.print(data.pressure);
+    Serial.print(sensorData.pressure);
     Serial.print(" mbar, ");
     Serial.print("Temp: ");
-    Serial.print(data.temperature);
+    Serial.print(sensorData.temperature);
     Serial.println(" C");
 
     Serial.print("HDC2080 Temp: ");
-    Serial.print(data.hdcTemperature);
+    Serial.print(sensorData.hdcTemperature);
     Serial.print(" C, ");
     Serial.print("Humidity: ");
-    Serial.print(data.humidity);
+    Serial.print(sensorData.humidity);
     Serial.println(" %");
 }
 
@@ -35,10 +36,16 @@ void setup() {
     sensingInit();
     dataloggingInit();
     gnssInit();
+
+    if (DEBUG) {
+        Serial.println("Debug logs active");
+    }
 }
 
 void loop() {
-    sensingExecute(data);
+    sensingExecute(sensorData);
+    // TODO: gnssExecute(gnssData);
+    dataloggingExecute(gnssData, sensorData);
 
     if (DEBUG) {
         printSensingData();

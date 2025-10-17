@@ -1,108 +1,188 @@
 #include "datalogging.h"
-#include "types.h"
 
-#include <Adafruit_SPIFlash.h>
 #include <Arduino.h>
 #include <FreeRTOS_SAMD21.h>
-#include <TinyGPS++.h>
+#include <SPI.h>
+#include <SdFat.h>
+
+#define SD_CS_PIN 2
+#define INIT_MHZ 1
+static constexpr size_t FILE_NAME_SIZE = 32;
 
 Settings g_settings;
 uint32_t bootcount = 0;
 
 static const char* BOOTCOUNT_FILE = "/.bootcount";
-static const char* SETTINGS_FILE = "/.settings";
-static const char* LOG_FILE = "/log.txt";
-static constexpr size_t FILE_NAME_SIZE = 32;
 static char CSV_FILE[FILE_NAME_SIZE] = "";
 
-QueueHandle_t gnssQueue;
-QueueHandle_t sensingQueue;
+SdFs sd;
 
-Adafruit_FlashTransport_SPI flashTransport(EXTERNAL_FLASH_USE_CS, EXTERNAL_FLASH_USE_SPI);
-Adafruit_SPIFlash flash(&flashTransport);
-FatFileSystem fatfs;
+// TODO: If this is ever used. Initialize them with xQueueCreate
+QueueHandle_t gnssQueue = nullptr;
+QueueHandle_t sensingQueue = nullptr;
 
-void loadSettings() {}
+static uint32_t readUintFromFile(const char* path, uint32_t fallback = 0) {
+    FsFile f = sd.open(path, O_READ);
+    if (!f) return fallback;
+    char buf[32] = {0};
+    int n = f.read(buf, sizeof(buf) - 1);
+    f.close();
+    if (n <= 0) return fallback;
+    return (uint32_t)strtoul(buf, nullptr, 10);
+}
 
-void saveSettings() {}
+static bool writeUintToFile(const char* path, uint32_t v) {
+    FsFile f = sd.open(path, O_WRITE | O_CREAT | O_TRUNC);
+    if (!f) return false;
+    f.println(v);
+    f.close();
+    return true;
+}
+
+static bool appendCsvHeaderIfNew(const char* path) {
+    if (!sd.exists(path)) {
+        FsFile f = sd.open(path, O_WRITE | O_CREAT | O_TRUNC);
+        if (!f) return false;
+        f.println(
+            "UptimeMillis,Time,Latitude,Longitude,GPSAltitude,BaroAltitude,"
+            "Pressure,Temperature,Humidity");
+        f.close();
+    }
+    return true;
+}
+
+static void printCardSize(const uint64_t cardSizeBytes) {
+    uint64_t cardSizeInBytes = cardSizeBytes * 512ULL; // SD cards use 512-byte sectors
+    Serial.print("\tCard size: ");
+    if (cardSizeBytes < (2ULL * 1024 * 1024)) {
+        Serial.print(cardSizeBytes / 1024);
+        Serial.println(" KB");
+    } else if (cardSizeBytes < (2ULL * 1024 * 1024 * 1024)) {
+        Serial.print(cardSizeBytes / (1024 * 1024));
+        Serial.println(" MB");
+    } else {
+        Serial.print(cardSizeBytes / (1024 * 1024 * 1024));
+        Serial.println(" GB");
+    }
+}
 
 void dataloggingInit() {
-    gnssQueue = xQueueCreate(4, sizeof(GnssData));
-    sensingQueue = xQueueCreate(4, sizeof(SensingData));
+    Serial.println("=============");
+    Serial.println(" Datalogging ");
+    Serial.println("=============");
 
-    if (!fatfs.begin(&flash)) {
-        Serial.println("Failed to initialize filesystem!");
+    pinMode(MISO, INPUT_PULLUP);
+    pinMode(SD_CS_PIN, OUTPUT);
+    digitalWrite(SD_CS_PIN, HIGH);
+    SPI.begin();
+    SPI.beginTransaction(SPISettings(1000000, MSBFIRST, SPI_MODE0));
+    for (int i = 0; i < 10; ++i) SPI.transfer(0xFF);
+    SPI.endTransaction();
+    Serial.println("SPI initialized");
+
+    SdSpiConfig cfg(SD_CS_PIN, DEDICATED_SPI, SD_SCK_MHZ(INIT_MHZ));
+
+    // Just check if we can access an SD card first, don't mount FS yet
+    if (!sd.cardBegin(cfg)) {
+        Serial.print("\tcardBegin failed  sdErr=0x");
+        Serial.print(sd.sdErrorCode(), HEX);
+        Serial.print(" sdData=0x");
+        Serial.println(sd.sdErrorData(), HEX);
         return;
     }
+    Serial.println("\tCard initialized");
 
-    File file = fatfs.open(BOOTCOUNT_FILE, FILE_READ);
-    if (!file) {
-        bootcount = 1;
-        file = fatfs.open(BOOTCOUNT_FILE, FILE_WRITE);
-        if (file) {
-            file.print(bootcount);
-            file.close();
-        }
-    } else {
-        bootcount = file.parseInt() + 1;
-        file.close();
-        file = fatfs.open(BOOTCOUNT_FILE, FILE_WRITE);
-        if (file) {
-            file.print(bootcount);
-            file.close();
-        }
+    uint64_t cardSizeInSectors = sd.card()->sectorCount();
+    printCardSize(cardSizeInSectors);
+
+    // Mount the filesystem
+    if (!sd.volumeBegin()) {
+        Serial.print("\tFS mount failed sdErr=0x");
+        Serial.print(sd.sdErrorCode(), HEX);
+        Serial.print(" sdData=0x");
+        Serial.println(sd.sdErrorData(), HEX);
+        return;
     }
+    Serial.println("\tFS mounted");
 
+    // Bootcount
+    bootcount = readUintFromFile(BOOTCOUNT_FILE, 0) + 1;
+    writeUintToFile(BOOTCOUNT_FILE, bootcount);
+
+    // Log file name
     char indexedLogFile[FILE_NAME_SIZE] = {0};
-    snprintf(indexedLogFile, FILE_NAME_SIZE, "/data/log_%lu.csv", (unsigned long)bootcount);
-    File log = fatfs.open(indexedLogFile, FILE_WRITE);
-    if (log) {
-        log.println("Time,Latitude,Longitude,Altitude,Humidity,Temperature,Pressure,AltitudeTime");
-        log.close();
+    snprintf(indexedLogFile, FILE_NAME_SIZE, "log_%lu.csv",
+             (unsigned long)bootcount);
+    if (!appendCsvHeaderIfNew(indexedLogFile)) {
+        Serial.println(
+            "\tERROR: Failed to create log file or write CSV header.");
+        return;
     }
+    strncpy(CSV_FILE, indexedLogFile, FILE_NAME_SIZE);
+    CSV_FILE[FILE_NAME_SIZE - 1] = '\0';
 
-    strncpy((char*)CSV_FILE, indexedLogFile, FILE_NAME_SIZE);
-
-    Serial.println("Datalogging initialized");
-    Serial.print("Boot count: ");
+    Serial.print("\tBoot count: ");
     Serial.println(bootcount);
-    Serial.print("Log file: ");
+    Serial.print("\tLog file: ");
     Serial.println(CSV_FILE);
 }
 
-void dataloggingExecute() {
-    GnssData gnssData = {};
-    SensingData sensingData = {};
-    
-    xQueueReceive(gnssQueue, &gnssData, 0);
-    xQueueReceive(sensingQueue, &sensingData, 0);
-    // Write to CSV
-    File log = fatfs.open(CSV_FILE, FILE_WRITE);
-    if (log) {
-        log.print(gnssData.time);
-        log.print(",");
-        log.print(gnssData.latitude, 6);
-        log.print(",");
-        log.print(gnssData.longitude, 6);
-        log.print(",");
-        log.print(gnssData.altitude, 2);
-        log.print(",");
-        log.print(sensingData.humidity, 2);
-        log.print(",");
-        log.print(sensingData.temperature, 2);
-        log.print(",");
-        log.print(sensingData.pressure, 2);
-        log.print(",");
-        log.print(sensingData.baroAltitude, 2);
-        log.println();
-        log.close();
+void dataloggingExecute(const GnssData& gnssData,
+                        const SensingData& sensingData) {
+    if (!CSV_FILE[0]) {
+        Serial.println("CSV_FILE not set, skipping datalogging");
+        return;
     }
+
+    FsFile log = sd.open(CSV_FILE, O_WRITE | O_CREAT | O_APPEND);
+    if (!log) {
+        Serial.print("Failed to open CSV file: ");
+        Serial.print(CSV_FILE);
+        Serial.print(" (sdErrorCode: ");
+        Serial.print(sd.sdErrorCode());
+        Serial.print(", sdErrorData: ");
+        Serial.print(sd.sdErrorData());
+        Serial.println(")");
+        return;
+    }
+
+    log.print(millis());
+    log.print(',');
+    log.print(gnssData.time);
+    log.print(',');
+    log.print(gnssData.latitude, 6);
+    log.print(',');
+    log.print(gnssData.longitude, 6);
+    log.print(',');
+    log.print(gnssData.altitude, 2);
+    log.print(',');
+    log.print(sensingData.baroAltitude, 2);
+    log.print(',');
+    log.print(sensingData.pressure, 2);
+    log.print(',');
+    log.print(sensingData.temperature, 2);
+    log.print(',');
+    log.print(sensingData.humidity, 2);
+    log.println();
+    log.close();
 }
 
 void dataloggingTask(void* pvParameters) {
     Serial.println("Datalogging task started");
+
     while (true) {
-        dataloggingExecute();
+        GnssData gnssData = {0};
+        SensingData sensingData = {0};
+
+        if (gnssQueue) {
+            xQueueReceive(gnssQueue, &gnssData, 0);
+        }
+        if (sensingQueue) {
+            xQueueReceive(sensingQueue, &sensingData, 0);
+        }
+
+        dataloggingExecute(gnssData, sensingData);
+
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
 }
