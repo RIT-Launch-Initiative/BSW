@@ -24,6 +24,21 @@ static bool appendCsvHeaderIfNew(const char* path) {
     return false;
 }
 
+static void printCardSize(const uint64_t cardSizeBytes) {
+    uint64_t cardSizeInBytes = cardSizeBytes * 512ULL; // SD cards use 512-byte sectors
+    Serial.print("\tCard size: ");
+    if (cardSizeBytes < (2ULL * 1024 * 1024)) {
+        Serial.print(cardSizeBytes / 1024);
+        Serial.println(" KB");
+    } else if (cardSizeBytes < (2ULL * 1024 * 1024 * 1024)) {
+        Serial.print(cardSizeBytes / (1024 * 1024));
+        Serial.println(" MB");
+    } else {
+        Serial.print(cardSizeBytes / (1024 * 1024 * 1024));
+        Serial.println(" GB");
+    }
+}
+
 void dataloggingInit() {
     Serial.println("=============");
     Serial.println(" Datalogging ");
@@ -36,6 +51,7 @@ void dataloggingInit() {
     snprintf(indexedLogFile, FILE_NAME_SIZE, "log_%lu.csv", bootcount);
     appendCsvHeaderIfNew(indexedLogFile);
     strncpy(CSV_FILE, indexedLogFile, FILE_NAME_SIZE);
+    CSV_FILE[FILE_NAME_SIZE - 1] = '\0';
 
     Serial.print("\tBoot count: ");
     Serial.println(bootcount);
@@ -51,7 +67,16 @@ void dataloggingExecute(const GnssData& gnssData,
     }
 
     FsFile log = sd.open(CSV_FILE, O_WRITE | O_CREAT | O_APPEND);
-    if (!log) return;
+    if (!log) {
+        Serial.print("Failed to open CSV file: ");
+        Serial.print(CSV_FILE);
+        Serial.print(" (sdErrorCode: ");
+        Serial.print(sd.sdErrorCode());
+        Serial.print(", sdErrorData: ");
+        Serial.print(sd.sdErrorData());
+        Serial.println(")");
+        return;
+    }
 
     log.print(millis());
     log.print(',');
