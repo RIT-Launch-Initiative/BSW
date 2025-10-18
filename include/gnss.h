@@ -1,11 +1,5 @@
 #pragma once
 
-struct Geofence {
-    float latitude;
-    float longitude;
-    float radiusMeters;
-};
-
 void gnssInit();
-void gnssExecute();
-void gnssTask(void* pvParameters);
+void gnssExecute(GnssData& data);
+int isWithinGeofence(double latitude, double longitude);
