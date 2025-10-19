@@ -8,11 +8,11 @@
 static char SETTINGS_FILE[FILE_NAME_SIZE] = "settings.json";
 extern SdFs sd;
 
-enum SettingsConstants {
-    LOG_ALTITUDE_THRESHOLD_DEFAULT = 100, // meters
-    BARO_ALTITUDE_TOLERANCE_DEFAULT = 5,  // meters
-    GPS_ALTITUDE_TOLERANCE_DEFAULT = 5,   // meters
-};
+
+static constexpr float LOG_ALTITUDE_THRESHOLD_DEFAULT = 100; // meters
+static constexpr float BARO_ALTITUDE_TOLERANCE_DEFAULT = 5;  // meters
+static constexpr float GPS_ALTITUDE_TOLERANCE_DEFAULT = 5;   // meters
+
 
 static void loadDefaultSettings(Settings& settings) {
     settings.logAltitudeThresholdMeters = LOG_ALTITUDE_THRESHOLD_DEFAULT;

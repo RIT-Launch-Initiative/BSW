@@ -80,7 +80,7 @@ static void handleDatalogging() {
         loggerOpen = true;
         dataloggingExecute(gnssData, sensorData);
     } else if (loggerOpen) {
-        if (DEBUG && loggerOpen) {
+        if (DEBUG) {
             Serial.println("Below altitude threshold, stopping datalogging");
         }
 
