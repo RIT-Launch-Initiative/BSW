@@ -97,5 +97,7 @@ void closeDatalogger() {
         return;
     }
 
-    logFile.close();
+    if (logFile.isOpen()) {
+        logFile.close();
+    }
 }
