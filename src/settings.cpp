@@ -1,0 +1,73 @@
+#include "settings.h"
+
+#include <ArduinoJson.h>
+#include <SdFat.h>
+
+#include "filesystem.h"
+#include "types.h"
+static char SETTINGS_FILE[FILE_NAME_SIZE] = "settings.json";
+extern SdFs sd;
+
+
+static constexpr float LOG_ALTITUDE_THRESHOLD_DEFAULT = 100; // meters
+static constexpr float BARO_ALTITUDE_TOLERANCE_DEFAULT = 5;  // meters
+static constexpr float GPS_ALTITUDE_TOLERANCE_DEFAULT = 5;   // meters
+
+
+static void loadDefaultSettings(Settings& settings) {
+    settings.logAltitudeThresholdMeters = LOG_ALTITUDE_THRESHOLD_DEFAULT;
+    settings.baroAltitudeTolerance = BARO_ALTITUDE_TOLERANCE_DEFAULT;
+    settings.gpsAltitudeTolerance = GPS_ALTITUDE_TOLERANCE_DEFAULT;
+}
+
+void loadSettings(Settings& settings) {
+    Serial.println("==============");
+    Serial.println(" Load Settings ");
+    Serial.println("==============");
+
+    JsonDocument doc;
+    uint8_t buffer[256] = {0};
+
+    loadDefaultSettings(settings);
+
+    if (!sd.exists(SETTINGS_FILE)) {
+        Serial.println("Settings file not found, using default settings");
+        return;
+    }
+
+    FsFile file = sd.open(SETTINGS_FILE, O_READ);
+    if (!file) {
+        Serial.println("Failed to open settings file");
+        return;
+    }
+
+    uint32_t fileSize = file.size();
+    if (fileSize > sizeof(buffer)) {
+        Serial.println("Settings file too large, using default settings");
+        file.close();
+        return;
+    }
+
+    file.read(buffer, fileSize);
+    DeserializationError error = deserializeJson(doc, buffer);
+    if (error) {
+        Serial.print("Failed to parse settings file: ");
+        Serial.println(error.c_str());
+    } else {
+        settings.logAltitudeThresholdMeters = doc["logAltitudeThresholdMeters"] | LOG_ALTITUDE_THRESHOLD_DEFAULT;
+        settings.baroAltitudeTolerance = doc["baroLogAltitudeTolerance"] | BARO_ALTITUDE_TOLERANCE_DEFAULT;
+        settings.gpsAltitudeTolerance = doc["gpsLogAltitudeTolerance"] | GPS_ALTITUDE_TOLERANCE_DEFAULT;
+    }
+
+    Serial.print("\tLog Altitude Threshold: ");
+    Serial.print(settings.logAltitudeThresholdMeters);
+    Serial.println(" m");
+    Serial.print("\tBaro Altitude Tolerance: ");
+    Serial.print(settings.baroAltitudeTolerance);
+    Serial.println(" m");
+    Serial.print("\tGPS Altitude Tolerance: ");
+    Serial.print(settings.gpsAltitudeTolerance);
+    Serial.println(" m");
+
+    file.close();
+}

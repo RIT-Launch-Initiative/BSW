@@ -83,6 +83,4 @@ void gnssExecute(GnssData& data) {
     data.latitude  = gps.location.isValid() ? gps.location.lat()    : 0.0;
     data.longitude = gps.location.isValid() ? gps.location.lng()    : 0.0;
     data.altitude  = gps.altitude.isValid() ? gps.altitude.meters() : 0.0;
-    snprintf(data.time, sizeof(data.time), "%02d:%02d:%02d",
-             gps.time.hour(), gps.time.minute(), gps.time.second());
 }
