@@ -1,0 +1,14 @@
+{
+  "geofences": [
+    {
+      "latitude": 43.084,
+      "longitude": -77.676,
+      "radiusMeters": 1000
+    },
+    {
+      "latitude": 43.085,
+      "longitude": -77.677,
+      "radiusMeters": 500
+    }
+  ]
+}
