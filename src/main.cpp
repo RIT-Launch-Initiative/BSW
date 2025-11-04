@@ -5,6 +5,7 @@
 #include "filesystem.h"
 #include "gnss.h"
 #include "sensing.h"
+#include "servo.h"
 #include "settings.h"
 #include "types.h"
 
@@ -105,7 +106,7 @@ static void handleGeofencing() {
 
     if (withinGeofenceIndex >= 0) {
         // Check if altitude is within the geofence's altitude range
-        if (isWithinGeofenceAltitude(withinGeofenceIndex, gnssData.altitude)) {
+        if (isWithinGeofenceAltitude(withinGeofenceIndex, sensorData.baroAltitude)) {
             static bool ledState = false;
             digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
             ledState = !ledState;
