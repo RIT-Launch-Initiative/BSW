@@ -14,6 +14,13 @@ static SensingData sensorData{0};
 static GnssData gnssData{0};
 static Settings settings{0};
 
+#ifndef PULL_BRIDGE_OUTPUT_PIN
+#define PULL_BRIDGE_OUTPUT_PIN 6
+#endif
+#ifndef PULL_BRIDGE_READ_PIN
+#define PULL_BRIDGE_READ_PIN 7
+#endif
+
 static void printSensingData() {
     Serial.print("MS5607 Altitude: ");
     Serial.print(sensorData.baroAltitude);
@@ -57,6 +64,10 @@ void setup() {
 
     loadSettings(settings);
 
+    pinMode(PULL_BRIDGE_OUTPUT_PIN, OUTPUT);
+    digitalWrite(PULL_BRIDGE_OUTPUT_PIN, LOW);
+    pinMode(PULL_BRIDGE_READ_PIN, INPUT_PULLUP);
+
     if (DEBUG) {
         Serial.println("Debug logs active");
     }
@@ -68,20 +79,19 @@ static void handleTelemetryGet() {
 }
 
 static void handleDatalogging() {
-    bool aboveThreshold = (gnssData.altitude > settings.logAltitudeThresholdMeters + settings.gpsAltitudeTolerance) &&
-                          (sensorData.baroAltitude > settings.logAltitudeThresholdMeters + settings.baroAltitudeTolerance);
+    bool writePinHigh = (digitalRead(PULL_BRIDGE_READ_PIN) == LOW);
     static bool loggerOpen = false;
 
-    if (aboveThreshold) {
+    if (writePinHigh) {
         if (DEBUG && !loggerOpen) {
-            Serial.println("Above altitude threshold, logging data");
+            Serial.println("BRIDGED (logging enabled)");
         }
 
         loggerOpen = true;
         dataloggingExecute(gnssData, sensorData);
     } else if (loggerOpen) {
         if (DEBUG) {
-            Serial.println("Below altitude threshold, stopping datalogging");
+            Serial.println("OPEN (logging disabled)");
         }
 
         loggerOpen = false;
