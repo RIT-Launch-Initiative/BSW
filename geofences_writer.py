@@ -3,6 +3,11 @@ import sys
 import struct
 import json
 import argparse
+import os
+import sys
+import struct
+import json
+import argparse
 import platform
 
 # Windows-specific imports (only available on Windows)
@@ -13,7 +18,9 @@ try:
 except (ImportError, AttributeError):
     WINDOWS_AVAILABLE = False
 
-GEOFENCE_STRUCT = "fff"  # latitude, longitude, radiusMeters
+# latitude, longitude, radiusMeters,
+# minAltitudeMeters, maxAltitudeMeters
+GEOFENCE_STRUCT = "fffff"
 GEOFENCE_SIZE = struct.calcsize(GEOFENCE_STRUCT)
 GEOFENCE_FILENAME = "geofences"
 
@@ -23,7 +30,6 @@ def find_sd_card():
     
     if system == "Windows" and WINDOWS_AVAILABLE:
         # Windows: Check for removable drives
-        # Get available drives
         drives = []
         bitmask = windll.kernel32.GetLogicalDrives()
         for letter in string.ascii_uppercase:
@@ -82,7 +88,9 @@ def prompt_geofence():
     lat = get_float("Latitude: ")
     lon = get_float("Longitude: ")
     rad = get_float("Radius (meters): ")
-    return lat, lon, rad
+    min_alt = get_float("Minimum Altitude (meters): ")
+    max_alt = get_float("Maximum Altitude (meters): ")
+    return lat, lon, rad, min_alt, max_alt
 
 def confirm_location(path):
     resp = input(f"Use SD card location '{path}'? [Y/n]: ").strip().lower()
@@ -94,7 +102,7 @@ def load_geofences_from_json(json_path):
     Expected JSON format:
     {
         "geofences": [
-            {"latitude": 43.084, "longitude": -77.676, "radiusMeters": 1000},
+            {"latitude": 43.084, "longitude": -77.676, "radiusMeters": 1000, "minAltitudeMeters": 0, "maxAltitudeMeters": 100},
             {"latitude": 43.085, "longitude": -77.677, "radiusMeters": 500}
         ]
     }
@@ -113,7 +121,10 @@ def load_geofences_from_json(json_path):
                 lat = float(gf['latitude'])
                 lon = float(gf['longitude'])
                 rad = float(gf['radiusMeters'])
-                geofences.append((lat, lon, rad))
+                # Optional altitude fields, default to 0.0 if not present
+                min_alt = float(gf.get('minAltitudeMeters', 0.0))
+                max_alt = float(gf.get('maxAltitudeMeters', 0.0))
+                geofences.append((lat, lon, rad, min_alt, max_alt))
             except (KeyError, ValueError) as e:
                 print(f"Error parsing geofence {i+1}: {e}")
                 sys.exit(1)
@@ -129,8 +140,8 @@ def load_geofences_from_json(json_path):
 def write_geofences(path, geofences):
     file_path = os.path.join(path, GEOFENCE_FILENAME)
     with open(file_path, "wb") as f:
-        for lat, lon, rad in geofences:
-            f.write(struct.pack(GEOFENCE_STRUCT, lat, lon, rad))
+        for lat, lon, rad, min_alt, max_alt in geofences:
+            f.write(struct.pack(GEOFENCE_STRUCT, lat, lon, rad, min_alt, max_alt))
     print(f"Wrote {len(geofences)} geofences to {file_path}")
 
 def main():
@@ -155,7 +166,7 @@ Examples:
                         help='Specify SD card path directly (skip auto-detection)')
     
     args = parser.parse_args()
-    
+
     # Determine SD card path
     if args.path:
         sd_path = args.path
@@ -171,13 +182,13 @@ Examples:
         if not confirm_location(sd_path):
             print("Aborted by user.")
             sys.exit(0)
-    
+
     # Load geofences
     if args.json:
         geofences = load_geofences_from_json(args.json)
         print(f"Loaded {len(geofences)} geofences from {args.json}:")
-        for i, (lat, lon, rad) in enumerate(geofences):
-            print(f"  Geofence {i+1}: Lat {lat}, Lon {lon}, Radius {rad} m")
+        for i, (lat, lon, rad, min_alt, max_alt) in enumerate(geofences):
+            print(f"  Geofence {i+1}: Lat {lat}, Lon {lon}, Radius {rad} m, Alt {min_alt}-{max_alt} m")
     else:
         # Interactive mode
         geofences = []
@@ -188,8 +199,8 @@ Examples:
                 geofences.append(geofence)
         except (EOFError, KeyboardInterrupt):
             print("\nInput finished.")
-            for i, (lat, lon, rad) in enumerate(geofences):
-                print(f"  Geofence {i+1}: Lat {lat}, Lon {lon}, Radius {rad} m")
+            for i, (lat, lon, rad, min_alt, max_alt) in enumerate(geofences):
+                print(f"  Geofence {i+1}: Lat {lat}, Lon {lon}, Radius {rad} m, Alt {min_alt}-{max_alt} m")
 
     if geofences:
         write_geofences(sd_path, geofences)

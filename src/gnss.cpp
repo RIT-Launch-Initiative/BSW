@@ -27,6 +27,14 @@ int isWithinGeofence(double latitude, double longitude) {
     return -1;
 }
 
+bool isWithinGeofenceAltitude(int geofenceIndex, double altitude) {
+    if (geofenceIndex < 0 || geofenceIndex >= (int)geofenceCount) {
+        return false;
+    }
+    return (altitude >= geofences[geofenceIndex].minAltitudeMeters &&
+            altitude <= geofences[geofenceIndex].maxAltitudeMeters);
+}
+
 void loadGeofences() {
     FsFile file = sd.open("/geofences", FILE_READ);
     if (!file) {
@@ -60,6 +68,10 @@ void gnssInit() {
         Serial.print(geofences[i].longitude, 6);
         Serial.print(", Radius ");
         Serial.print(geofences[i].radiusMeters);
+        Serial.print(" m, Alt ");
+        Serial.print(geofences[i].minAltitudeMeters);
+        Serial.print("-");
+        Serial.print(geofences[i].maxAltitudeMeters);
         Serial.println(" m");
     }
 
