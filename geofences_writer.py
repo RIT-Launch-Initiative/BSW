@@ -5,6 +5,14 @@ import json
 import argparse
 import platform
 
+# Windows-specific imports (only available on Windows)
+try:
+    import string
+    from ctypes import windll
+    WINDOWS_AVAILABLE = True
+except (ImportError, AttributeError):
+    WINDOWS_AVAILABLE = False
+
 GEOFENCE_STRUCT = "fff"  # latitude, longitude, radiusMeters
 GEOFENCE_SIZE = struct.calcsize(GEOFENCE_STRUCT)
 GEOFENCE_FILENAME = "geofences"
@@ -13,11 +21,8 @@ def find_sd_card():
     candidates = []
     system = platform.system()
     
-    if system == "Windows":
+    if system == "Windows" and WINDOWS_AVAILABLE:
         # Windows: Check for removable drives
-        import string
-        from ctypes import windll
-        
         # Get available drives
         drives = []
         bitmask = windll.kernel32.GetLogicalDrives()
@@ -32,7 +37,8 @@ def find_sd_card():
                 drive_type = windll.kernel32.GetDriveTypeW(f"{drive}\\")
                 if drive_type == 2:  # DRIVE_REMOVABLE
                     candidates.append(drive)
-            except:
+            except OSError:
+                # Drive might not be accessible
                 pass
     else:
         # Unix-like systems (Linux, macOS)
