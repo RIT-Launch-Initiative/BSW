@@ -2,7 +2,9 @@ import os
 import sys
 import struct
 
-GEOFENCE_STRUCT = "fffff"  # latitude, longitude, radiusMeters, minAltitudeMeters, maxAltitudeMeters
+# latitude, longitude, radiusMeters,
+# minAltitudeMeters, maxAltitudeMeters
+GEOFENCE_STRUCT = "fffff"
 GEOFENCE_SIZE = struct.calcsize(GEOFENCE_STRUCT)
 GEOFENCE_FILENAME = "geofences"
 
