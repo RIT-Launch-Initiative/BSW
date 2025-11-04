@@ -94,14 +94,22 @@ static void handleGeofencing() {
     int withinGeofenceIndex = isWithinGeofence(gnssData.latitude, gnssData.longitude);
 
     if (withinGeofenceIndex >= 0) {
-        static bool ledState = false;
-        digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
-        ledState = !ledState;
+        // Check if altitude is within the geofence's altitude range
+        if (isWithinGeofenceAltitude(withinGeofenceIndex, gnssData.altitude)) {
+            static bool ledState = false;
+            digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
+            ledState = !ledState;
+        }
     }
     
     if (DEBUG && (withinGeofenceIndex >= 0)) {
         Serial.print("Within geofence index: ");
         Serial.println(withinGeofenceIndex);
+        if (isWithinGeofenceAltitude(withinGeofenceIndex, gnssData.altitude)) {
+            Serial.println("Altitude within geofence range");
+        } else {
+            Serial.println("Altitude outside geofence range");
+        }
     }
 }
 

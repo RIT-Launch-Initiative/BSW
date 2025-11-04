@@ -2,7 +2,7 @@ import os
 import sys
 import struct
 
-GEOFENCE_STRUCT = "fff"  # latitude, longitude, radiusMeters
+GEOFENCE_STRUCT = "fffff"  # latitude, longitude, radiusMeters, minAltitudeMeters, maxAltitudeMeters
 GEOFENCE_SIZE = struct.calcsize(GEOFENCE_STRUCT)
 GEOFENCE_FILENAME = "geofences"
 
@@ -47,7 +47,9 @@ def prompt_geofence():
     lat = get_float("Latitude: ")
     lon = get_float("Longitude: ")
     rad = get_float("Radius (meters): ")
-    return lat, lon, rad
+    min_alt = get_float("Minimum Altitude (meters): ")
+    max_alt = get_float("Maximum Altitude (meters): ")
+    return lat, lon, rad, min_alt, max_alt
 
 def confirm_location(path):
     resp = input(f"Use SD card location '{path}'? [Y/n]: ").strip().lower()
@@ -56,8 +58,8 @@ def confirm_location(path):
 def write_geofences(path, geofences):
     file_path = os.path.join(path, GEOFENCE_FILENAME)
     with open(file_path, "wb") as f:
-        for lat, lon, rad in geofences:
-            f.write(struct.pack(GEOFENCE_STRUCT, lat, lon, rad))
+        for lat, lon, rad, min_alt, max_alt in geofences:
+            f.write(struct.pack(GEOFENCE_STRUCT, lat, lon, rad, min_alt, max_alt))
     print(f"Wrote {len(geofences)} geofences to {file_path}")
 
 def main():
@@ -78,8 +80,8 @@ def main():
             geofences.append(geofence)
     except (EOFError, KeyboardInterrupt):
         print("\nInput finished.")
-        for i, (lat, lon, rad) in enumerate(geofences):
-            print(f"  Geofence {i+1}: Lat {lat}, Lon {lon}, Radius {rad} m")
+        for i, (lat, lon, rad, min_alt, max_alt) in enumerate(geofences):
+            print(f"  Geofence {i+1}: Lat {lat}, Lon {lon}, Radius {rad} m, Alt {min_alt}-{max_alt} m")
 
     if geofences:
         write_geofences(sd_path, geofences)
