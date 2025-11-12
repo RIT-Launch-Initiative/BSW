@@ -115,6 +115,15 @@ static void handleDatalogging() {
 }
 
 
+static void handleDrop() {
+    static bool ledState = false;
+    digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
+    ledState = !ledState;
+    servoOpen(SERVO_CONTROL_PIN);
+    Serial.println("Altitude within geofence range");
+    dataloggingSetDropped(true);
+}
+
 static void handleGeofencing() {
     int withinGeofenceIndex = isWithinGeofence(gnssData.latitude, gnssData.longitude);
 
@@ -130,15 +139,8 @@ static void handleGeofencing() {
         if (isWithinGeofenceAltitude(withinGeofenceIndex,
                                      sensorData.baroAltitude) ||
             isWithinGeofenceAltitude(withinGeofenceIndex,
-                                     gnssData.altitude) || 
-            withinGlobalAltitudeDrop(sensorData.baroAltitude) ||
-            withinGlobalAltitudeDrop(gnssData.altitude)) {
-            static bool ledState = false;
-            digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
-            ledState = !ledState;
-            servoOpen(SERVO_CONTROL_PIN);
-            Serial.println("Altitude within geofence range");
-            dataloggingSetDropped(true);
+                                     gnssData.altitude)) {
+            handleDrop();
         } else {
             digitalWrite(LED_BUILTIN, LOW);
             Serial.println("Altitude outside geofence range");
@@ -146,11 +148,16 @@ static void handleGeofencing() {
     }
 }
 
+
 void loop() {
     handleTelemetryGet();
     handleDatalogging();
     handleGeofencing();
 
+    if (withinGlobalAltitudeDrop(sensorData.baroAltitude) ||
+        withinGlobalAltitudeDrop(gnssData.altitude)) {
+            handleDrop();
+    }
 
     if (DEBUG) {
         printSensingData();
