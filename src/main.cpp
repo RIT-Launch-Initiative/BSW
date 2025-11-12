@@ -138,6 +138,7 @@ static void handleGeofencing() {
             ledState = !ledState;
             servoOpen(SERVO_CONTROL_PIN);
             Serial.println("Altitude within geofence range");
+            dataloggingSetDropped(true);
         } else {
             digitalWrite(LED_BUILTIN, LOW);
             Serial.println("Altitude outside geofence range");

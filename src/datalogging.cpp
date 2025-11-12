@@ -105,3 +105,7 @@ void closeDatalogger() {
         logFile.close();
     }
 }
+
+void dataloggingSetDropped(bool dropped) {
+    DROPPED = dropped;
+}
