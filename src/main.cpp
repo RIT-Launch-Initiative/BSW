@@ -73,7 +73,7 @@ void setup() {
     digitalWrite(PULL_BRIDGE_OUTPUT_PIN, LOW);
     pinMode(PULL_BRIDGE_READ_PIN, INPUT_PULLUP);
 
-    servoClose()
+    servoClose(SERVO_CONTROL_PIN);
 
     if (DEBUG) {
         Serial.println("Debug logs active");
@@ -111,21 +111,20 @@ static void handleGeofencing() {
     int withinGeofenceIndex = isWithinGeofence(gnssData.latitude, gnssData.longitude);
 
     if (withinGeofenceIndex >= 0) {
+        if (DEBUG) {
+            Serial.print("Within geofence index: ");
+            Serial.println(withinGeofenceIndex);
+        }
+
         // Check if altitude is within the geofence's altitude range
         if (isWithinGeofenceAltitude(withinGeofenceIndex, sensorData.baroAltitude)) {
             static bool ledState = false;
             digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
             ledState = !ledState;
             servoOpen(SERVO_CONTROL_PIN);
-        }
-    }
-    
-    if (DEBUG && (withinGeofenceIndex >= 0)) {
-        Serial.print("Within geofence index: ");
-        Serial.println(withinGeofenceIndex);
-        if (isWithinGeofenceAltitude(withinGeofenceIndex, gnssData.altitude)) {
             Serial.println("Altitude within geofence range");
         } else {
+            digitalWrite(LED_BUILTIN, LOW);
             Serial.println("Altitude outside geofence range");
         }
     }
