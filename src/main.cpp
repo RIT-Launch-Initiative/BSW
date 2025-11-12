@@ -10,6 +10,8 @@
 #include "types.h"
 
 bool DEBUG = true;
+bool GLOBAL_ALTITUDE_DROP_ALLOWED = true; // Jonathan - Make this a config eventually
+int GLOBAL_ALTITUDE_DROP_THRESHOLD_METERS = 10000;
 
 static SensingData sensorData{0};
 static GnssData gnssData{0};
@@ -25,6 +27,11 @@ static Settings settings{0};
 #ifndef SERVO_CONTROL_PIN
 #define SERVO_CONTROL_PIN 9
 #endif
+
+static bool withinGlobalAltitudeDrop(int dropMeters) {
+    return GLOBAL_ALTITUDE_DROP_ALLOWED && dropMeters >= GLOBAL_ALTITUDE_DROP_THRESHOLD_METERS;
+}
+
 
 static void printSensingData() {
     Serial.print("MS5607 Altitude: ");
@@ -123,7 +130,9 @@ static void handleGeofencing() {
         if (isWithinGeofenceAltitude(withinGeofenceIndex,
                                      sensorData.baroAltitude) ||
             isWithinGeofenceAltitude(withinGeofenceIndex,
-                                     gnssData.altitude)) {
+                                     gnssData.altitude) || 
+            withinGlobalAltitudeDrop(sensorData.baroAltitude) ||
+            withinGlobalAltitudeDrop(gnssData.altitude)) {
             static bool ledState = false;
             digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
             ledState = !ledState;
