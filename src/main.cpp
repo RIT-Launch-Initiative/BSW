@@ -74,7 +74,7 @@ void setup() {
     dataloggingInit();
     gnssInit();
 
-    loadSettings(settings);
+    // loadSettings(settings);
 
     pinMode(PULL_BRIDGE_OUTPUT_PIN, OUTPUT);
     digitalWrite(PULL_BRIDGE_OUTPUT_PIN, LOW);
