@@ -14,5 +14,5 @@ void servoClose(uint8_t pin) {
 }
 
 void servoOpen(uint8_t pin) {
-    servo.write(28);
+    servo.write(20);
 }

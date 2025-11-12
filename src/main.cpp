@@ -22,6 +22,10 @@ static Settings settings{0};
 #define PULL_BRIDGE_READ_PIN 7
 #endif
 
+#ifndef SERVO_CONTROL_PIN
+#define SERVO_CONTROL_PIN 5
+#endif
+
 static void printSensingData() {
     Serial.print("MS5607 Altitude: ");
     Serial.print(sensorData.baroAltitude);
@@ -69,6 +73,8 @@ void setup() {
     digitalWrite(PULL_BRIDGE_OUTPUT_PIN, LOW);
     pinMode(PULL_BRIDGE_READ_PIN, INPUT_PULLUP);
 
+    servoClose()
+
     if (DEBUG) {
         Serial.println("Debug logs active");
     }
@@ -110,6 +116,7 @@ static void handleGeofencing() {
             static bool ledState = false;
             digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
             ledState = !ledState;
+            servoOpen(SERVO_CONTROL_PIN);
         }
     }
     
