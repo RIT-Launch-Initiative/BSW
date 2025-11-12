@@ -1,16 +1,18 @@
 #include "servo.h"
 
 #include <Arduino.h>
+#include <Servo.h>
+
+static Servo servo;
 
 void servoInit(uint8_t pin) {
-    pinMode(pin, OUTPUT);
-    analogWrite(pin, 0);
+    servo.attach(pin);
 }
 
 void servoClose(uint8_t pin) {
-    analogWrite(pin, 0);
+    servo.write(0);
 }
 
 void servoOpen(uint8_t pin) {
-    analogWrite(pin, 255);
+    servo.write(28);
 }
