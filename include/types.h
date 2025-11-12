@@ -25,4 +25,6 @@ struct Geofence {
     float latitude;
     float longitude;
     float radiusMeters;
+    float minAltitudeMeters;
+    float maxAltitudeMeters;
 };

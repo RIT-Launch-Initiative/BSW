@@ -9,7 +9,7 @@ static char SETTINGS_FILE[FILE_NAME_SIZE] = "settings.json";
 extern SdFs sd;
 
 
-static constexpr float LOG_ALTITUDE_THRESHOLD_DEFAULT = 100; // meters
+static constexpr float LOG_ALTITUDE_THRESHOLD_DEFAULT = 0; // meters
 static constexpr float BARO_ALTITUDE_TOLERANCE_DEFAULT = 5;  // meters
 static constexpr float GPS_ALTITUDE_TOLERANCE_DEFAULT = 5;   // meters
 
