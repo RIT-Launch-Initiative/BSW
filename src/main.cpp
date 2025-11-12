@@ -23,7 +23,7 @@ static Settings settings{0};
 #endif
 
 #ifndef SERVO_CONTROL_PIN
-#define SERVO_CONTROL_PIN 5
+#define SERVO_CONTROL_PIN 9
 #endif
 
 static void printSensingData() {
