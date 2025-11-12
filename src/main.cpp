@@ -73,6 +73,7 @@ void setup() {
     digitalWrite(PULL_BRIDGE_OUTPUT_PIN, LOW);
     pinMode(PULL_BRIDGE_READ_PIN, INPUT_PULLUP);
 
+    servoInit(SERVO_CONTROL_PIN);
     servoClose(SERVO_CONTROL_PIN);
 
     if (DEBUG) {
