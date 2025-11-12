@@ -11,7 +11,7 @@
 
 bool DEBUG = true;
 bool GLOBAL_ALTITUDE_DROP_ALLOWED = true; // Jonathan - Make this a config eventually
-int GLOBAL_ALTITUDE_DROP_THRESHOLD_METERS = 10000;
+int GLOBAL_ALTITUDE_DROP_THRESHOLD_METERS = 5000;
 
 static SensingData sensorData{0};
 static GnssData gnssData{0};

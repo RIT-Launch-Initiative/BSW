@@ -6,9 +6,11 @@
 
 
 static char CSV_FILE[FILE_NAME_SIZE] = "";
+static bool DROPPED = false;
 static FsFile logFile;
 
 extern SdFs sd;
+
 
 static bool appendCsvHeaderIfNew(const char* path) {
     if (!sd.exists(path)) {
@@ -16,7 +18,7 @@ static bool appendCsvHeaderIfNew(const char* path) {
         if (!f) return false;
         f.println(
             "UptimeMillis,Time,Latitude,Longitude,GPSAltitude,BaroAltitude,"
-            "Pressure,Temperature,Humidity");
+            "Pressure,Temperature,Humidity,Dropped");
         f.close();
 
         return true;
@@ -87,6 +89,8 @@ void dataloggingExecute(const GnssData& gnssData,
     logFile.print(sensingData.temperature, 2);
     logFile.print(',');
     logFile.print(sensingData.humidity, 2);
+    logFile.print(',');
+    logFile.print(DROPPED ? 'T' : 'F');
     logFile.println();
     logFile.close();
 }
