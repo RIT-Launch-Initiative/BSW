@@ -118,7 +118,12 @@ static void handleGeofencing() {
         }
 
         // Check if altitude is within the geofence's altitude range
-        if (isWithinGeofenceAltitude(withinGeofenceIndex, sensorData.baroAltitude)) {
+
+        // Jonathan - Fix before next launch because we don't know if sensors or GPS will fail LOL
+        if (isWithinGeofenceAltitude(withinGeofenceIndex,
+                                     sensorData.baroAltitude) ||
+            isWithinGeofenceAltitude(withinGeofenceIndex,
+                                     gnssData.altitude)) {
             static bool ledState = false;
             digitalWrite(LED_BUILTIN, ledState ? HIGH : LOW);
             ledState = !ledState;
