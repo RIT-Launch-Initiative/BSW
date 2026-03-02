@@ -3,7 +3,6 @@
 #include "types.h"
 
 #include <Arduino.h>
-#include <FreeRTOS_SAMD21.h>
 #include <HDC2080.h>
 #include <MS56XX.h>
 #include <Wire.h>
@@ -51,15 +50,4 @@ void sensingExecute(SensingData& data) {
     data.temperature = ms5607.temperature;
     data.baroAltitude = ms5607.altitude;
 
-}
-
-void sensingTask(void* pvParameters) {
-    Serial.println("Sensing task started");
-
-    SensingData data;
-    while (true) {
-        sensingExecute(data);
-
-        vTaskDelay(pdMS_TO_TICKS(1000));
-    }
 }

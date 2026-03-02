@@ -1,6 +1,4 @@
 #include <Arduino.h>
-#include <FreeRTOS_SAMD21.h>
-
 #include "datalogging.h"
 #include "filesystem.h"
 #include "gnss.h"
