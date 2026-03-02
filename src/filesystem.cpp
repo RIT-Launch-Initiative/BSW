@@ -1,7 +1,6 @@
 #include "filesystem.h"
 
 #include <Arduino.h>
-#include <FreeRTOS_SAMD21.h>
 #include <SPI.h>
 #include <SdFat.h>
 #include <TinyGPS++.h>

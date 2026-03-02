@@ -16,7 +16,7 @@ extern SdFs sd;
 TinyGPSPlus gps;
 
 int isWithinGeofence(double latitude, double longitude) {
-    if (!gps.location.isValid()) return false;
+    if (!gps.location.isValid()) return -1;
     for (size_t i = 0; i < geofenceCount; ++i) {
         double dist = TinyGPSPlus::distanceBetween(
             latitude, longitude, geofences[i].latitude, geofences[i].longitude);
