@@ -1,4 +1,4 @@
-# BSW (Balloon Software) - User Guide
+# BSW (Balloon Software) — User Guide
 
 ## Table of Contents
 
@@ -11,43 +11,40 @@
 7. [Data Retrieval and Analysis](#data-retrieval-and-analysis)
 8. [Troubleshooting](#troubleshooting)
 
+---
+
 ## Overview
 
-The Balloon Software (BSW) is an autonomous payload management system for high-altitude balloon flights. It automatically logs environmental data, tracks GPS position, and triggers payload release based on configurable geofences and altitude thresholds.
+Balloon Software (BSW) supports firmware projects for the HAB team. The firmware automatically logs environmental data, tracks GPS position, and triggers payload release based on configurable geofences and altitude thresholds.
+The main loop runs at 1 Hz and handles four things in order: sensor polling, SD card logging, geofence checking, and a global altitude failsafe.
 
-![System Overview Diagram]()
+---
 
 ## Hardware Requirements
 
 ### Required Components
 
-- **Adafruit ItsyBitsy M0** microcontroller
-- **MS5607** barometric pressure/temperature sensor (I2C)
-- **HDC2080** humidity/temperature sensor (I2C)
-- **GPS module** with UART output (9600 baud, NMEA format)
-- **Servo motor** for payload release mechanism
-- **SD card** (formatted FAT32) for data logging
-- **Pull bridge circuit** (optional, for logging control)
+- **Adafruit ItsyBitsy M0** microcontroller (ATSAMD21G18A, 3.3V logic)
+- **MS5607** barometric pressure/temperature sensor (I2C, address 0x76)
+- **HDC2080** humidity/temperature sensor (I2C, address 0x40)
+- **GPS module** with UART output (NMEA format, 9600 baud)
+- **Servo motor** for payload release
+- **MicroSD card** (FAT32 formatted)
+- **Pull bridge circuit** for logging enable/disable
 
 ### Wiring Connections
 
-| Component | Connection | ItsyBitsy Pin |
-|-----------|------------|---------------|
-| SD Card CS | SPI CS | Pin 2 |
-| MS5607 | I2C (SDA/SCL) | I2C pins |
-| HDC2080 | I2C (SDA/SCL) | I2C pins |
-| GPS Module | UART TX | Serial1 RX |
-| Servo | Signal | Pin 9 |
-| Pull Bridge Output | Digital Out | Pin 6 |
-| Pull Bridge Input | Digital In | Pin 7 |
+| Component | ItsyBitsy Pin | Notes |
+|---|---|---|
+| SD Card CS | Pin 2 | SPI bus |
+| MS5607 | SDA/SCL | I2C, address 0x76 |
+| HDC2080 | SDA/SCL | I2C, address 0x40 |
+| GPS Module TX | Serial1 RX | 9600 baud |
+| Servo Signal | Pin 9 | |
+| Pull Bridge Output | Pin 6 | Digital out |
+| Pull Bridge Input | Pin 7 | Digital in, internal pull-up |
 
-![Wiring Diagram]()
-
-**Important Notes**:
-- MS5607 I2C address: 0x76 (low)
-- HDC2080 I2C address: 0x40
-- GPS baud rate: 9600
-- Power all components with appropriate voltage levels (3.3V for ItsyBitsy M0)
+---
 
 ## Software Setup
 
@@ -59,132 +56,57 @@ The Balloon Software (BSW) is an autonomous payload management system for high-a
 
 ### Building the Project
 
-**Option 1: Using Make**
 ```bash
-cd /path/to/BSW
+# Via Make
 make all
-```
 
-**Option 2: Using PlatformIO CLI**
-```bash
+# Via PlatformIO CLI
 pio run
 ```
 
-**Option 3: Using VS Code**
-- Open the project folder in VS Code
-- Click the PlatformIO icon in the sidebar
-- Select "Build" under PROJECT TASKS
+Or use the PlatformIO sidebar in VS Code and click **Build** under PROJECT TASKS.
 
-### Uploading to Board
+### Uploading to the Board
 
-1. Connect the ItsyBitsy M0 to your computer via USB
-2. Put the board in bootloader mode (double-tap reset button - red LED should pulse)
-3. Upload using one of these methods:
+1. Connect the ItsyBitsy M0 via USB
+2. Double-tap the reset button — the red LED should pulse, indicating bootloader mode
+3. Upload:
 
-**Via PlatformIO**:
 ```bash
 pio run --target upload
 ```
 
-**Via VS Code**: Click "Upload" in PlatformIO PROJECT TASKS
+Or click **Upload** in the PlatformIO PROJECT TASKS sidebar.
 
-### Common Build Issues
+### Common Build Issue: MS56XX Library
 
-**MS56XX Library Issue**: If build fails due to MS56XX library, run:
+If the build fails with a `multiple definition of 'main'` error, run:
+
 ```bash
 make fix
 ```
-This removes the problematic `main.cpp` file from the MS56XX library.
+
+This removes an erroneous `main.cpp` that ships inside the MS56XX library and conflicts with the project's own entry point. Run it once after the first build.
+
+---
 
 ## Preparing for Flight
 
-### Step 1: Format SD Card
+### Step 1: Format the SD Card
 
-1. Format a micro SD card as **FAT32**
-2. Ensure the card is empty or contains only geofence data
+Format a microSD card as **FAT32**. The card is read once on boot — any changes made after power-on are ignored until the next reboot.
 
 ### Step 2: Configure Geofences
 
-Geofences define geographic boundaries where the payload should be released. You can configure them using the included Python tool.
+See [Geofence Configuration](#geofence-configuration) below.
 
-#### Using the Geofence Writer Tool
+### Step 3: Insert the SD Card
 
-**Prerequisites**:
-- Python 3.x installed
-- SD card connected to your computer
+Insert the card fully and confirm it is latched. A partially seated card will fail silently or produce intermittent errors.
 
-**Interactive Mode** (enter geofences manually):
-```bash
-python geofences_writer.py
-```
+### Step 4: Pre-Flight Verification
 
-The tool will:
-1. Auto-detect your SD card location
-2. Prompt you to enter geofence parameters:
-   - Latitude (decimal degrees)
-   - Longitude (decimal degrees)
-   - Radius (meters)
-   - Minimum altitude (meters)
-   - Maximum altitude (meters)
-3. Press Ctrl+D (Linux/Mac) or Ctrl+Z (Windows) when finished
-4. Confirm and write to SD card
-
-**JSON Mode** (load from file):
-```bash
-python geofences_writer.py --json geofences_example.json
-```
-
-**Specify SD Card Path**:
-```bash
-python geofences_writer.py --json geofences.json --path /media/sdcard
-```
-
-#### JSON Geofence Format
-
-Create a file `geofences.json`:
-
-```json
-{
-  "geofences": [
-    {
-      "latitude": 43.084,
-      "longitude": -77.676,
-      "radiusMeters": 1000,
-      "minAltitudeMeters": 0,
-      "maxAltitudeMeters": 100
-    },
-    {
-      "latitude": 43.085,
-      "longitude": -77.677,
-      "radiusMeters": 500,
-      "minAltitudeMeters": 50,
-      "maxAltitudeMeters": 150
-    }
-  ]
-}
-```
-
-**Field Descriptions**:
-- `latitude`: Center point latitude in decimal degrees (positive = North, negative = South)
-- `longitude`: Center point longitude in decimal degrees (positive = East, negative = West)
-- `radiusMeters`: Horizontal trigger radius in meters
-- `minAltitudeMeters`: Minimum altitude (MSL) for payload release (optional, defaults to 0)
-- `maxAltitudeMeters`: Maximum altitude (MSL) for payload release (optional, defaults to 0)
-
-**Important**: If altitude fields are 0 or omitted, altitude checking is effectively disabled for that geofence.
-
-### Step 3: Insert SD Card
-
-1. Safely eject SD card from computer
-2. Insert into the SD card slot on your payload electronics
-3. Ensure card is fully seated and latched
-
-### Step 4: Pre-Flight Testing
-
-1. Connect the ItsyBitsy M0 to a computer via USB
-2. Open a serial monitor (115200 baud)
-3. Power on or reset the board
-4. Verify initialization messages:
+Connect to a serial monitor at **115200 baud**, then power on or reset the board. You should see:
 
 ```
 =============
@@ -194,14 +116,6 @@ Create a file `geofences.json`:
 	Card initialized
 	Card size: XXX MB
 	FS mounted
-
-=============
-    GNSS    
-=============
-	Loaded 2 geofences
-	Geofence 0: Lat 43.084000, Lon -77.676000, Radius 1000.00 m, Alt 0.00-100.00 m
-	Geofence 1: Lat 43.085000, Lon -77.677000, Radius 500.00 m, Alt 50.00-150.00 m
-	GNSS initialized
 
 =============
    Sensors   
@@ -214,97 +128,162 @@ Create a file `geofences.json`:
 =============
 	Boot count: 1
 	Log file: log_1.csv
+
+=============
+    GNSS    
+=============
+	Loaded 2 geofences
+	Geofence 0: Lat 43.084000, Lon -77.676000, Radius 1000.00 m, Alt 0.00-100.00 m
+	Geofence 1: Lat 43.085000, Lon -77.677000, Radius 500.00 m, Alt 50.00-150.00 m
+	GNSS initialized
 ```
 
-5. Check that sensor data is being read correctly
-6. Verify GPS acquires a fix (may take several minutes outdoors)
+### Pre-Flight Checklist
+
+- [ ] SD card formatted FAT32 and seated
+- [ ] Geofence file written and geofence count matches expectation in serial output
+- [ ] Geofence altitude bounds are set to realistic values (see warning below)
+- [ ] Boot count incremented — confirms SD card is readable and writable
+- [ ] Barometric altitude reading is reasonable for your ground elevation
+- [ ] Sensor readings are non-zero and plausible
+- [ ] GPS fix acquired (may take 5–15 minutes outdoors with clear sky view)
+- [ ] Servo moves to closed position on boot
+- [ ] Pull bridge is **open** before launch
+- [ ] `DEBUG` is set to `false` in `main.cpp`
+
+> **⚠️ Altitude bounds warning:** If `minAltitudeMeters` and `maxAltitudeMeters` are both `0` (the default when omitted), the geofence altitude check will never be satisfied during flight because the balloon will not be at 0m altitude while over the target zone. **Always set realistic altitude bounds.** Failing to do so means the payload will not drop even if the balloon is directly over the target.
+
+---
+
+## Geofence Configuration
+
+Geofences define the geographic area and altitude band in which payload release is triggered. Up to 32 geofences can be loaded. They are checked in order — the first match wins.
+
+### Using the Geofence Writer Tool
+
+The `geofences_writer.py` script writes geofence data to the SD card in the binary format the firmware expects. Requires Python 3.
+
+**JSON mode (recommended for flight):**
+```bash
+python3 geofences_writer.py --json geofences.json --path /media/sdcard
+```
+
+**Interactive mode:**
+```bash
+python3 geofences_writer.py
+```
+
+The tool auto-detects SD cards on Windows, Linux, and macOS. If detection fails, pass the path explicitly with `--path`.
+
+### JSON Format
+
+```json
+{
+  "geofences": [
+    {
+      "latitude": 43.084,
+      "longitude": -77.676,
+      "radiusMeters": 1000,
+      "minAltitudeMeters": 500,
+      "maxAltitudeMeters": 5000
+    }
+  ]
+}
+```
+
+| Field | Description |
+|---|---|
+| `latitude` | Center latitude, decimal degrees (positive = North) |
+| `longitude` | Center longitude, decimal degrees (positive = East) |
+| `radiusMeters` | Horizontal trigger radius in meters |
+| `minAltitudeMeters` | Minimum altitude MSL for drop trigger (defaults to `0` if omitted) |
+| `maxAltitudeMeters` | Maximum altitude MSL for drop trigger (defaults to `0` if omitted) |
+
+### Drop Trigger Logic
+
+A drop is triggered when **both** of the following are true simultaneously:
+
+1. GPS position is within the geofence's horizontal radius
+2. Altitude (barometric **or** GPS) is within the geofence's altitude range
+
+Both altitude sources are checked — if either is within range, the drop triggers. This provides redundancy if one altitude source is unreliable.
+
+### Global Altitude Failsafe
+
+Independently of geofencing, a drop is triggered if the balloon exceeds `GLOBAL_ALTITUDE_DROP_THRESHOLD_METERS` (default: 10,000m) anywhere. This is a failsafe for cases where GPS is lost or the balloon drifts outside all geofences. Do not change this value without consulting the software team.
+
+---
 
 ## Operating the System
 
 ### Normal Operation Sequence
 
-1. **Pre-flight**:
-   - Power on the system
-   - Wait for GPS fix (LED may blink during acquisition)
-   - Verify serial output shows valid sensor readings
-   - Close servo to secure payload
+**Before launch:**
 
-2. **Launch**:
-   - Enable datalogging by bridging pins 6 and 7 (pull bridge closed)
-   - System will begin logging to SD card
-   - Serial output: `BRIDGED (logging enabled)`
+1. Power on the system
+2. Verify serial output — all subsystems initialized, geofences loaded, sensor readings valid
+3. Wait for GPS fix outdoors (5–15 minutes cold start)
+4. Confirm servo is in the closed position
+5. Keep the pull bridge **open** — logging is disabled until you intentionally enable it
 
-3. **Flight**:
-   - System continuously monitors:
-     - GPS position vs. geofences
-     - Altitude (barometric and GPS)
-     - Environmental sensors
-   - Data is logged every 1 second
+**At launch:**
 
-4. **Payload Release**:
-   - System triggers when **BOTH** conditions are met:
-     - GPS position is within a geofence radius
-     - Altitude is within that geofence's altitude range
-   - Servo opens to release payload
-   - LED blinks to indicate drop
-   - Log file marks drop event with 'T' in Dropped column
+- Close the pull bridge (connect pins 6 and 7) to enable datalogging
+- Serial output will confirm: `BRIDGED (logging enabled)`
 
-5. **Backup Release**:
-   - If geofence trigger fails, global altitude backup activates
-   - Default threshold: 10,000 meters
-   - Ensures payload release even if GPS is lost
+**During flight:**
 
-6. **Post-Flight Recovery**
-   - Before powering down the ItsyBitsy M0, remove the bridge that enables SD card logging
-     - This prevents the SD card from potentially becoming corrupted if a write is attempted upon power loss
-   - It is now safe to power down the ItsyBitsy M0
+- System logs all sensor and GPS data once per second
+- Geofence checks run continuously
+- No operator action required
 
-### Pull Bridge Operation
+**Payload release:**
 
-The pull bridge controls datalogging:
+- Servo opens automatically when drop conditions are met
+- LED blinks to indicate drop
+- `Dropped` column in the log switches from `F` to `T`
 
-- **Bridge CLOSED** (pins 6-7 connected): Logging ENABLED
-- **Bridge OPEN** (pins 6-7 disconnected): Logging DISABLED
+**Recovery:**
 
-This allows external control (e.g., mechanical switch) to start/stop logging without reprogramming.
+1. **Before powering down**, open the pull bridge to disable logging
+   - This ensures any in-progress SD write is completed cleanly before power is removed
+   - Removing power mid-write can corrupt the log file or the filesystem
+2. Power down the system
+3. Remove the SD card
+
+### Pull Bridge Reference
+
+| Bridge State | Pins 6–7 | Logging |
+|---|---|---|
+| Closed | Connected | **Enabled** |
+| Open | Disconnected | **Disabled** |
 
 ### Debug Mode
 
-Set `DEBUG = true` in [main.cpp](../src/main.cpp#L12) for verbose serial output:
+`DEBUG = true` in `main.cpp` enables verbose 1 Hz serial output including sensor readings, GPS position, and geofence check status. It is useful for pre-flight verification but **should be set to `false` before flight** to reduce overhead.
 
-```cpp
-bool DEBUG = true;
-```
-
-This enables:
-- Sensor readings printed every second
-- GPS data output
-- Geofence check status
-- Logging state changes
-
-**Disable for flight** to reduce power consumption and improve reliability.
+---
 
 ## Data Retrieval and Analysis
 
 ### Retrieving Log Files
 
-1. Power down the system
-2. Remove SD card
-3. Connect to computer
-4. Copy `log_N.csv` files (where N is the boot count)
+1. Power down and remove SD card
+2. Connect to computer
+3. Copy `log_N.csv` where N matches the boot count shown during initialization
+
+Multiple flights will produce multiple numbered files — they are never overwritten.
 
 ### Log File Format
 
-CSV format with the following columns:
-
 | Column | Description | Units |
-|--------|-------------|-------|
-| UptimeMillis | Time since boot | milliseconds |
+|---|---|---|
+| UptimeMillis | Time since boot | ms |
 | Time | GPS time (UTC) | HH:MM:SS |
 | Latitude | GPS latitude | decimal degrees |
 | Longitude | GPS longitude | decimal degrees |
-| GPSAltitude | GPS altitude | meters MSL |
-| BaroAltitude | Barometric altitude | meters MSL |
+| GPSAltitude | GPS altitude MSL | meters |
+| BaroAltitude | Barometric altitude MSL | meters |
 | Pressure | Atmospheric pressure | mbar |
 | Temperature | MS5607 temperature | °C |
 | Humidity | Relative humidity | % |
@@ -312,152 +291,50 @@ CSV format with the following columns:
 
 ### Analyzing Data
 
-**Excel/Google Sheets**:
-1. Open CSV file
-2. Data is already properly formatted
-3. Create graphs of altitude vs. time, temperature profiles, etc.
-
-**Python Analysis Example**:
+**Python example:**
 ```python
 import pandas as pd
 import matplotlib.pyplot as plt
 
-# Load data
 df = pd.read_csv('log_1.csv')
 
-# Plot altitude over time
+# Altitude over time
 plt.figure(figsize=(12, 6))
-plt.plot(df['UptimeMillis']/1000/60, df['BaroAltitude'], label='Barometric')
-plt.plot(df['UptimeMillis']/1000/60, df['GPSAltitude'], label='GPS')
+plt.plot(df['UptimeMillis']/60000, df['BaroAltitude'], label='Barometric')
+plt.plot(df['UptimeMillis']/60000, df['GPSAltitude'], label='GPS')
 plt.xlabel('Time (minutes)')
 plt.ylabel('Altitude (m)')
 plt.legend()
 plt.grid(True)
 plt.show()
 
-# Find drop event
-drop_time = df[df['Dropped'] == 'T']['UptimeMillis'].iloc[0] / 1000 / 60
-print(f"Payload dropped at {drop_time:.2f} minutes")
+# Drop event time
+drop_rows = df[df['Dropped'] == 'T']
+if not drop_rows.empty:
+    drop_time = drop_rows['UptimeMillis'].iloc[0] / 60000
+    print(f"Payload dropped at {drop_time:.2f} minutes")
 ```
 
-**Mapping Trajectory**:
-Use Latitude/Longitude columns with tools like:
-- Google Earth (import CSV)
-- GPS Visualizer (https://www.gpsvisualizer.com/)
-- Python libraries (folium, plotly)
+**Mapping trajectory:**
+- [GPS Visualizer](https://www.gpsvisualizer.com/) — import CSV directly
+- Google Earth — accepts CSV with lat/lon columns
+- Python: `folium` or `plotly` for interactive maps
+
+---
 
 ## Troubleshooting
 
-### SD Card Not Detected
-
-**Symptoms**: Error messages during filesystem initialization
-
-**Solutions**:
-- Verify SD card is FAT32 formatted
-- Try a different SD card (some cards are incompatible)
-- Check CS pin connection (pin 2)
-- Ensure SD card is fully inserted
-- Try reseating the card
-
-### GPS Not Getting Fix
-
-**Symptoms**: GPS coordinates show 0.0, or "GPS not initialized"
-
-**Solutions**:
-- GPS requires clear view of sky
-- Cold start can take 5-15 minutes
-- Verify GPS module is powered (3.3V)
-- Check UART connection (Serial1)
-- Confirm GPS baud rate is 9600
-
-### Sensors Reading Zero or Invalid Data
-
-**Symptoms**: Temperature/pressure/humidity show 0 or unrealistic values
-
-**Solutions**:
-- Check I2C connections (SDA/SCL)
-- Verify sensor addresses (MS5607: 0x76, HDC2080: 0x40)
-- Run I2C scanner to detect devices
-- Ensure sensors are powered correctly
-- Try replacing sensor module
-
-### Servo Not Moving
-
-**Symptoms**: Servo doesn't open/close during testing
-
-**Solutions**:
-- Check servo power supply (may need separate 5V source)
-- Verify signal wire connected to pin 9
-- Test servo separately with Arduino servo example
-- Ensure servo isn't mechanically jammed
-
-### Geofences Not Loading
-
-**Symptoms**: "Loaded 0 geofences" message
-
-**Solutions**:
-- Verify `geofences` file exists on SD card (no extension)
-- Re-run `geofences_writer.py` to regenerate file
-- Check SD card is readable
-- Ensure SD card was properly ejected after writing geofences
-
-### Payload Not Dropping in Geofence
-
-**Symptoms**: Balloon enters geofence but servo doesn't trigger
-
-**Solutions**:
-- Check altitude is within geofence's altitude range
-- Verify GPS has valid fix (lat/lon not 0.0)
-- Enable DEBUG mode to see geofence check status
-- Check servo is functional
-- Verify geofence coordinates are correct
-
-### Log Files Empty or Missing
-
-**Symptoms**: No CSV file created or file has only headers
-
-**Solutions**:
-- Verify pull bridge is closed (logging enabled)
-- Check serial output for "BRIDGED (logging enabled)"
-- Ensure SD card has free space
-- Verify filesystem initialized successfully
-- Check SD card isn't write-protected
-
-### System Keeps Rebooting
-
-**Symptoms**: Continuous resets, increasing boot count
-
-**Solutions**:
-- Check power supply stability (brown-out detection)
-- Verify sufficient current capacity for all components
-- Look for short circuits
-- Test with minimal configuration (no sensors/GPS)
-
-## Advanced Configuration
-
-### Adjusting Drop Altitude Threshold
-
-Edit [main.cpp](../src/main.cpp#L13-L14):
-
-```cpp
-bool GLOBAL_ALTITUDE_DROP_ALLOWED = true;  // Enable/disable backup trigger
-int GLOBAL_ALTITUDE_DROP_THRESHOLD_METERS = 10000;  // Altitude in meters
-```
-
-**Note**: Planning to migrate this to settings.json in future versions.
-
-### Custom Pin Assignments
-
-Edit pin definitions in [main.cpp](../src/main.cpp#L18-L27):
-
-```cpp
-#define PULL_BRIDGE_OUTPUT_PIN 6
-#define PULL_BRIDGE_READ_PIN 7
-#define SERVO_CONTROL_PIN 9
-```
-
-Edit SD CS pin in [filesystem.cpp](../src/filesystem.cpp#L11):
-
-```cpp
-#define SD_CS_PIN 2
-```
+| Symptom | Likely Cause | Fix |
+|---|---|---|
+| `cardBegin failed` on serial | Bad card, wrong format, or SPI wiring issue | Reformat as FAT32; try a different card; check pin 2 |
+| `FS mounted` not shown | Filesystem corruption | Reformat card |
+| Boot count not incrementing | SD card is read-only | Check write-protect switch on card |
+| Geofence count = 0 | Missing or corrupt `geofences` file | Re-run `geofences_writer.py` |
+| GPS lat/lon = 0.0 | No fix yet | Move outdoors; wait 5–15 min; check antenna |
+| Sensors reading 0 or garbage | I2C wiring issue or wrong address | Check SDA/SCL; run I2C scanner; verify 3.3V power |
+| Servo doesn't move | No drop condition met, or power issue | Check geofence bounds; verify servo has adequate power supply |
+| Payload doesn't drop in geofence | Altitude bounds set to 0, or no GPS fix | Set realistic altitude bounds; verify GPS fix before launch |
+| No log file created | Pull bridge not closed, or SD issue | Check bridge; verify `BRIDGED (logging enabled)` in serial output |
+| Log file has only header row | Bridge opened immediately after closing | Keep bridge closed for at least one loop cycle (1 second) |
+| System continuously rebooting | Power supply brownout | Check current capacity; verify all components powered correctly |
+| Build fails: multiple definition of `main` | MS56XX library ships its own `main.cpp` | Run `make fix` once |
